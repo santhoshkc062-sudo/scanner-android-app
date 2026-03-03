@@ -1,0 +1,26 @@
+<div class="app-container">
+
+  <!-- IP SET SCREEN -->
+  <div *ngIf="!isIpSet" class="ip-screen">
+    <h2>Set Server IP</h2>
+
+    <input 
+      type="text" 
+      placeholder="Enter IP Address"
+      [(ngModel)]="ipAddress"
+    />
+
+    <button (click)="setIp()">Save & Continue</button>
+  </div>
+
+
+  <!-- SCANNER SCREEN -->
+  <div *ngIf="isIpSet" class="scanner-screen">
+
+    <img src="assets\Scan.gif" alt="Scanner" class="scanner-img">
+
+    <h2 class="scan-text">SCAN</h2>
+
+  </div>
+
+</div>

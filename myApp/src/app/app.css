@@ -1,0 +1,55 @@
+.app-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6f9;
+  font-family: Arial, sans-serif;
+}
+
+/* IP Screen */
+.ip-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: center;
+}
+
+.ip-screen input {
+  padding: 10px;
+  font-size: 16px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.ip-screen button {
+  padding: 10px;
+  font-size: 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ip-screen button:hover {
+  background: #125aa0;
+}
+
+
+/* Scanner Screen */
+.scanner-screen {
+  text-align: center;
+}
+
+.scanner-img {
+  width: 200px;
+  margin-bottom: 20px;
+}
+
+.scan-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+}

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BarcodeScanner, LensFacing } from '@capacitor-mlkit/barcode-scanning';
 import { isPlatformBrowser, } from '@angular/common';
 import { DataTransfer } from './services/data-transfer';
+import e from 'express';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ export class AppComponent implements OnInit {
   ipAddress: string = '';
   isIpSet: boolean = false;
   scanResult: string = '';
+  errormessage: string = '';
 
   constructor(private zone: NgZone, 
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -77,7 +79,7 @@ async scanQR() {
       //   this.cd.detectChanges();
       // });
 
-      this.dataTransfer.sendData({ qr: paylod }).subscribe(
+      this.dataTransfer.sendData(paylod).subscribe(
   (response: any) => {
 
     this.zone.run(() => {
@@ -86,14 +88,37 @@ async scanQR() {
     });
 
   },
+  // (error) => {
+
+  //         this.errormessage = error.message || 'Unknown error';
+  //           console.error('Error sending data to server:', error.message || error);
+  //   this.zone.run(() => {
+  //     this.scanResult = 'Server Error';
+  //     this.cd.detectChanges();
+  //   });
+
+  // }
   (error) => {
 
-    this.zone.run(() => {
-      this.scanResult = 'Server Error';
-      this.cd.detectChanges();
-    });
+  console.error('Server error:', error);
 
-  }
+  this.zone.run(() => {
+
+    if (error.error && error.error.message) {
+      this.errormessage = error.error.message;
+    } 
+    else if (error.error && typeof error.error === 'string') {
+      this.errormessage = error.error;
+    }
+    else {
+      this.errormessage = error.message || 'Server Error';
+    }
+
+    this.scanResult = 'Failed';
+    this.cd.detectChanges();
+  });
+
+}
 );
 
       await BarcodeScanner.stopScan();
@@ -126,6 +151,8 @@ datasent(){
       console.log('Data cleared on server:', response);
     },
     (error) => {
+      this.errormessage = error.message || 'Unknown error';
+      console.error('Error clearing data on server:', error.message || error);
       alert('Failed to clear data on server');
     }
   );

@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { BarcodeScanner, LensFacing } from '@capacitor-mlkit/barcode-scanning';
 
 @Component({
   selector: 'app-root',
@@ -10,11 +10,20 @@ import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
   ipAddress: string = '';
   isIpSet: boolean = false;
   scanResult: string = '';
+
+  ngOnInit() {
+    // Check if IP was already saved previously
+    const savedIp = localStorage.getItem('serverIp');
+    if (savedIp) {
+      this.ipAddress = savedIp;
+      this.isIpSet = true;
+    }
+  }
 
   setIp() {
     if (this.ipAddress.trim() !== '') {
@@ -26,29 +35,38 @@ export class AppComponent {
   }
 
   async scanQR() {
+    try {
+      // 1. Permissions
+      const permission = await BarcodeScanner.requestPermissions();
+      if (permission.camera !== 'granted') {
+        alert('Camera permission denied');
+        return;
+      }
 
-    const permission = await BarcodeScanner.requestPermissions();
+      // 2. The critical check for "Other" phones
+      const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
+      
+      if (!available) {
+        alert('Scanner module missing. Downloading now... please wait 10 seconds and try again.');
+        await BarcodeScanner.installGoogleBarcodeScannerModule();
+        return; // Stop here so the user can try again after the download
+      }
 
-    if (permission.camera !== 'granted') {
-      alert('Camera permission denied');
-      return;
+      // 3. Simple scan call (Fixed the Error)
+      const result = await BarcodeScanner.scan();
+
+      if (result.barcodes.length > 0) {
+        this.scanResult = result.barcodes[0].rawValue!;
+      }
+    } catch (error) {
+      console.error('Scan Error:', error);
+      alert('Scanning failed. Make sure Google Play Services is updated.');
     }
-
-    const result = await BarcodeScanner.scan();
-
-    if (result.barcodes.length > 0) {
-      this.scanResult = result.barcodes[0].rawValue!;
-      console.log('Scanned:', this.scanResult);
-
-
-    }
-
   }
-
-  resetIp(){
+  resetIp() {
     localStorage.removeItem('serverIp');
     this.isIpSet = false;
     this.ipAddress = '';
+    this.scanResult = '';
   }
-
 }

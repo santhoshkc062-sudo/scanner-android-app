@@ -1,55 +1,111 @@
+/* Container Defaults */
 .app-container {
   height: 100vh;
+  width: 100vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f4f6f9;
-  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
 }
 
-/* IP Screen */
-.ip-screen {
+/* Settings Button (Top Right) */
+.btn-settings {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Centered Scanner Layout */
+.scanner-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-content {
   text-align: center;
-}
-
-.ip-screen input {
-  padding: 10px;
-  font-size: 16px;
-  width: 250px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.ip-screen button {
-  padding: 10px;
-  font-size: 16px;
-  background: #1976d2;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.ip-screen button:hover {
-  background: #125aa0;
-}
-
-
-/* Scanner Screen */
-.scanner-screen {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .scanner-img {
-  width: 200px;
-  margin-bottom: 20px;
+  width: 220px;
+  height: auto;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.08));
 }
 
 .scan-text {
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
+  font-size: 24px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: #2c3e50;
+  margin: 10px 0 5px 0;
+}
+
+.sub-text {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+/* Button Styling */
+.btn-scan-start {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 50px;
+  text-transform: uppercase;
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+  transition: transform 0.2s;
+}
+
+.btn-scan-start:active {
+  transform: scale(0.95);
+}
+
+/* Input Styling */
+.modern-input {
+  padding: 12px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.modern-input:focus {
+  border-color: #007bff;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-weight: 600;
 }

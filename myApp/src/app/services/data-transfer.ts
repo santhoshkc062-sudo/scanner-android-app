@@ -8,25 +8,17 @@ import { HttpClient } from '@angular/common/http';
 export class DataTransfer {
   constructor(private http: HttpClient) {}
 
-  sendData(data: any) {
-    const serverIp = localStorage.getItem('serverIp');
-    if (!serverIp) {
-      console.error('Server IP not set');
-      return;
-    }
+sendData(data: any) {
 
-    const url = `http://${serverIp}/barcode-template/scan`;
+  const serverIp = localStorage.getItem('serverIp');
 
-    console.log('Sending data to:', url);
-
-    this.http.post(url, data).subscribe(
-      (response) => {
-        console.log('Data sent successfully:', response);
-      },
-      (error) => {
-        console.error('Error sending data:', error);
-      }
-    );
+  if (!serverIp) {
+    throw new Error('Server IP not set');
   }
+
+  const url = `http://${serverIp}/barcode-template/scan`;
+
+  return this.http.post(url, data);
+}
   
 }

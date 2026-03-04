@@ -1,8 +1,8 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit ,PLATFORM_ID, Inject, NgZone, ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
-
+import { BarcodeScanner, LensFacing } from '@capacitor-mlkit/barcode-scanning';
+import { isPlatformBrowser, } from '@angular/common';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -16,19 +16,25 @@ export class AppComponent implements OnInit {
   isIpSet: boolean = false;
   scanResult: string = '';
 
-  constructor(private zone: NgZone, private cd: ChangeDetectorRef) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: Object, private zone: NgZone, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
-    const savedIp = localStorage.getItem('serverIp');
-    if (savedIp) {
-      this.ipAddress = savedIp;
-      this.isIpSet = true;
+    // Check if IP was already saved previously
+    if (isPlatformBrowser(this.platformId)) {
+      const savedIp = localStorage.getItem('serverIp');
+      if (savedIp) {
+        this.ipAddress = savedIp;
+        this.isIpSet = true;
+      }
     }
   }
 
   setIp() {
     if (this.ipAddress.trim() !== '') {
-      localStorage.setItem('serverIp', this.ipAddress);
+      // Check again before saving
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('serverIp', this.ipAddress);
+      }
       this.isIpSet = true;
     } else {
       alert('Please enter IP Address');
@@ -74,9 +80,7 @@ async scanQR() {
 
 
   resetIp() {
-    localStorage.removeItem('serverIp');
     this.isIpSet = false;
-    this.ipAddress = '';
     this.scanResult = '';
   }
 

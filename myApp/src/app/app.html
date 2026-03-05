@@ -7,7 +7,7 @@
   </div>
 
   <div *ngIf="isIpSet && !scanResult" class="scanner-screen">
-    
+
     <button class="btn-settings" (click)="resetIp()">
       <span class="icon">⚙</span>
     </button>
@@ -15,23 +15,35 @@
     <div class="center-content">
       <div class="scanner-container">
         <img src="assets/Scan.gif" alt="Scanner" class="scanner-img">
-        <div class="scan-frame"></div> </div>
-      
+        <div class="scan-frame"></div>
+      </div>
+
       <h2 class="scan-text">SCAN</h2>
       <p class="sub-text">Align QR code within the frame</p>
-      
+
       <button class="btn-scan-start" (click)="scanQR()">Start Scan</button>
     </div>
   </div>
 
   <div *ngIf="scanResult" class="success-screen">
     <div class="result-card">
-      <h3>Scan Successful</h3>
+      <!-- <img *ngIf="errormessage" src="assets/wrong.gif" alt="Error" class="success-gif">
+      <img src="assets/Success.gif" alt="Success" class="success-gif"> -->
+
+      <img *ngIf="!errormessage" src="assets/Success.gif" alt="Success" class="status-gif">
+
+      <img *ngIf="errormessage" src="assets/wrong.gif" alt="Error" class="status-gif">
+
+      <h3 [class.error-title]="errormessage" class="status-title">
+        {{ errormessage ? 'Scan Failed' : 'Scan Successful' }}
+      </h3>
+
+      <!-- <h3 class="success-title">Scan Successful</h3> -->
       <div class="result-box">{{ scanResult }}</div>
       <div>
         <p *ngIf="errormessage" class="error-message">{{ errormessage }}</p>
       </div>
-<button class="btn-primary" (click)="rescan()">Scan Again</button>
+      <button class="btn-primary" (click)="rescan()">Scan Again</button>
       <button class="btn-text" (click)="scanResult = ''">Back</button>
     </div>
   </div>

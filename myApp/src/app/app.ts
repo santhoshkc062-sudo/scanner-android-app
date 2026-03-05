@@ -1,4 +1,4 @@
-import { Component, OnInit ,PLATFORM_ID, Inject, NgZone, ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BarcodeScanner, LensFacing } from '@capacitor-mlkit/barcode-scanning';
@@ -20,11 +20,11 @@ export class AppComponent implements OnInit {
   scanResult: string = '';
   errormessage: string = '';
 
-  constructor(private zone: NgZone, 
+  constructor(private zone: NgZone,
     @Inject(PLATFORM_ID) private platformId: Object,
     private cd: ChangeDetectorRef,
     private dataTransfer: DataTransfer
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Check if IP was already saved previously
@@ -49,86 +49,88 @@ export class AppComponent implements OnInit {
     }
   }
 
-async scanQR() {
-  try {
+  async scanQR() {
+    this.errormessage = '';
+    try {
 
-    const permission = await BarcodeScanner.requestPermissions();
-    if (permission.camera !== 'granted') {
-      alert('Camera permission denied');
-      return;
+      const permission = await BarcodeScanner.requestPermissions();
+      if (permission.camera !== 'granted') {
+        alert('Camera permission denied');
+        return;
+      }
+
+      const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
+
+      if (!available) {
+        alert('Scanner module missing. Downloading now... please wait 10 seconds and try again.');
+        await BarcodeScanner.installGoogleBarcodeScannerModule();
+        return;
+      }
+
+      const result = await BarcodeScanner.scan();
+
+      if (result.barcodes.length > 0) {
+
+        const value = result.barcodes[0].rawValue!;
+
+        const paylod = { barcode: value };
+
+        this.zone.run(() => {
+          this.scanResult = value;
+          this.cd.detectChanges();
+        });
+
+        this.dataTransfer.sendData(paylod).subscribe(
+          (response: any) => {
+
+            this.zone.run(() => {
+              this.errormessage = '';
+              this.scanResult = response.message || JSON.stringify(response);
+              this.cd.detectChanges();
+            });
+
+          },
+          // (error) => {
+
+          //         this.errormessage = error.message || 'Unknown error';
+          //           console.error('Error sending data to server:', error.message || error);
+          //   this.zone.run(() => {
+          //     this.scanResult = 'Server Error';
+          //     this.cd.detectChanges();
+          //   });
+
+          // }
+          (error) => {
+
+            console.error('Server error:', error);
+
+            this.zone.run(() => {
+
+              if (error.error && error.error.message) {
+                this.errormessage = error.error.message;
+              }
+              else if (error.error && typeof error.error === 'string') {
+                this.errormessage = error.error;
+              }
+              else {
+                this.errormessage = error.message || 'Server Error';
+              }
+
+              this.scanResult = 'Failed';
+              this.cd.detectChanges();
+            });
+
+          }
+        );
+
+        await BarcodeScanner.stopScan();
+      }
+
+    } catch (error) {
+      console.error('Scan Error:', error);
+      alert('Scanning failed. Make sure Google Play Services is updated.');
     }
-
-    const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
-
-    if (!available) {
-      alert('Scanner module missing. Downloading now... please wait 10 seconds and try again.');
-      await BarcodeScanner.installGoogleBarcodeScannerModule();
-      return;
-    }
-
-    const result = await BarcodeScanner.scan();
-
-    if (result.barcodes.length > 0) {
-
-      const value = result.barcodes[0].rawValue!;
-
-      const paylod = { barcode : value };
-
-      // this.zone.run(() => {
-      //   this.scanResult = value;
-      //   this.cd.detectChanges();
-      // });
-
-      this.dataTransfer.sendData(paylod).subscribe(
-  (response: any) => {
-
-    this.zone.run(() => {
-      this.scanResult = response.message || JSON.stringify(response);
-      this.cd.detectChanges();
-    });
-
-  },
-  // (error) => {
-
-  //         this.errormessage = error.message || 'Unknown error';
-  //           console.error('Error sending data to server:', error.message || error);
-  //   this.zone.run(() => {
-  //     this.scanResult = 'Server Error';
-  //     this.cd.detectChanges();
-  //   });
-
-  // }
-  (error) => {
-
-  console.error('Server error:', error);
-
-  this.zone.run(() => {
-
-    if (error.error && error.error.message) {
-      this.errormessage = error.error.message;
-    } 
-    else if (error.error && typeof error.error === 'string') {
-      this.errormessage = error.error;
-    }
-    else {
-      this.errormessage = error.message || 'Server Error';
-    }
-
-    this.scanResult = 'Failed';
-    this.cd.detectChanges();
-  });
-
-}
-);
-
-      await BarcodeScanner.stopScan();
-    }
-
-  } catch (error) {
-    console.error('Scan Error:', error);
-    alert('Scanning failed. Make sure Google Play Services is updated.');
   }
-}
 
 
   resetIp() {
@@ -137,24 +139,25 @@ async scanQR() {
   }
 
   rescan() {
-  this.scanResult = '';
-  this.scanQR();
-}
-
-datasent(){
-
-  const payload = {
-     barcode: "P4949683;S2001;D26001;V059428"
+    this.scanResult = '';
+    this.errormessage = '';
+    this.scanQR();
   }
-  this.dataTransfer.sendData(payload).subscribe(
-    (response: any) => {
-      console.log('Data cleared on server:', response);
-    },
-    (error) => {
-      this.errormessage = error.message || 'Unknown error';
-      console.error('Error clearing data on server:', error.message || error);
-      alert('Failed to clear data on server');
+
+  datasent() {
+
+    const payload = {
+      barcode: "P4949683;S2001;D26001;V059428"
     }
-  );
-}
+    this.dataTransfer.sendData(payload).subscribe(
+      (response: any) => {
+        console.log('Data cleared on server:', response);
+      },
+      (error) => {
+        this.errormessage = error.message || 'Unknown error';
+        console.error('Error clearing data on server:', error.message || error);
+        alert('Failed to clear data on server');
+      }
+    );
+  }
 }

@@ -27,8 +27,6 @@
 
   <div *ngIf="scanResult" class="success-screen">
     <div class="result-card">
-      <!-- <img *ngIf="errormessage" src="assets/wrong.gif" alt="Error" class="success-gif">
-      <img src="assets/Success.gif" alt="Success" class="success-gif"> -->
 
       <img *ngIf="!errormessage" src="assets/Success.gif" alt="Success" class="status-gif">
 
@@ -47,8 +45,8 @@
       <button class="btn-text" (click)="scanResult = ''">Back</button>
     </div>
   </div>
-<!-- 
-  <div>
+
+  <!-- <div>
     <button class="btn-clear"  (click)="datasent()" >Clear Data</button>
   </div> -->
 

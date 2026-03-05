@@ -9,7 +9,7 @@ export class DataTransfer {
   constructor(private http: HttpClient) {}
 
 sendData(data: any) {
-
+console.log('Sending data to server:', data);
   const serverIp = localStorage.getItem('serverIp');
 
   if (!serverIp) {

@@ -29,11 +29,18 @@ export class AppComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       const savedIp = localStorage.getItem('serverIp');
       const scanResult = localStorage.getItem('scanResult');
+      const storedScan = localStorage.getItem('scanData');
       if (savedIp) {
         this.ipAddress = savedIp;
         this.isIpSet = true;
       }
+
+      if(storedScan){
+        this.response = JSON.parse(storedScan);
+      }
     }
+
+    console.log('response from server:', this.response);
   }
 
   setIp() {
@@ -72,13 +79,30 @@ async scanQR() {
 
       const paylod = { barcode : value };
 
-      // this.zone.run(() => {
-      //   this.scanResult = value;
-      //   this.cd.detectChanges();
-      // });
+      if(!this.response){
+              this.dataTransfer.sendData(paylod).subscribe(
+        (response: any) => {
+          this.response = response;
+          this.response = {
+            customerName: response.customerName,
+            partName: response.partName,
+            partNumber: response.partNumber,
+            id : response.id
+          };
 
-      this.dataTransfer.sendData(paylod).subscribe(
-  (response: any) => {
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem("scanData", JSON.stringify(response));
+          }
+
+          if (response.ScanningCompleted === true) {
+
+  if (isPlatformBrowser(this.platformId)) {
+    localStorage.removeItem("scanData");
+  }
+
+  this.response = null;   
+
+}
 
     this.zone.run(() => {
       this.scanResult = response.message || JSON.stringify(response);
@@ -86,16 +110,7 @@ async scanQR() {
     });
 
   },
-  // (error) => {
 
-  //         this.errormessage = error.message || 'Unknown error';
-  //           console.error('Error sending data to server:', error.message || error);
-  //   this.zone.run(() => {
-  //     this.scanResult = 'Server Error';
-  //     this.cd.detectChanges();
-  //   });
-
-  // }
   (error) => {
 
   console.error('Server error:', error);
@@ -119,9 +134,59 @@ async scanQR() {
 }
 );
 
+      }
+
+      else{
+        const dataSent = {
+          barcode: value,
+          id : this.response.id
+        }
+        console.log('Data to send:', dataSent);
+        this.dataTransfer.sendData(dataSent).subscribe(
+          (response: any) => {
+            this.response = response;
+            this.response = {
+              customerName: response.customerName,
+              partName: response.partName,
+              partNumber: response.partNumber,
+              id : response.id
+            };
+            if (isPlatformBrowser(this.platformId)) {
+              localStorage.setItem("scanData", JSON.stringify(response));
+            }
+            if (response.ScanningCompleted === true) {
+              localStorage.removeItem("scanData");
+            }
+            this.zone.run(() => {
+              this.scanResult = response.message || JSON.stringify(response);
+              this.cd.detectChanges();
+            });
+          },
+          (error) => {
+            console.error('Server error:', error);
+            this.zone.run(() => {
+              if (error.error && error.error.message) {
+                this.errormessage = error.error.message;
+              }
+              else if (error.error && typeof error.error === 'string') {
+                this.errormessage = error.error;
+              }
+              else {
+                this.errormessage = error.message || 'Server Error';
+              }
+              this.scanResult = 'Failed';
+              this.cd.detectChanges();
+            });
+          }
+        );
+      }
+
+  
+
+
+
       await BarcodeScanner.stopScan();
     }
-
   } catch (error) {
     console.error('Scan Error:', error);
     alert('Scanning failed. Make sure Google Play Services is updated.');
@@ -144,15 +209,79 @@ datasent(){
   const payload = {
      barcode: "P4949683;S2001;D26001;V059428"
   }
-  this.dataTransfer.sendData(payload).subscribe(
-    (response: any) => {
-      console.log('Data cleared on server:', response);
-    },
+  console.log('Payload to send:', this.response);
+
+  if(!this.response){
+      this.dataTransfer.sendData(payload).subscribe(
+   (response: any) => {
+
+  this.response = response;
+
+  this.response = {
+    customerName: response.customerName,
+    partName: response.partName,
+    partNumber: response.partNumber,
+  };
+
+  if (isPlatformBrowser(this.platformId)) {
+    localStorage.setItem("scanData", JSON.stringify(response));
+  }
+
+  if (response.ScanningCompleted === true) {
+    localStorage.removeItem("scanData");
+  }
+
+  this.zone.run(() => {
+    this.scanResult = response.message;
+    this.cd.detectChanges();
+  });
+
+},
     (error) => {
       this.errormessage = error.message || 'Unknown error';
       console.error('Error clearing data on server:', error.message || error);
       alert('Failed to clear data on server');
     }
   );
+  }
+  else{
+
+    const dataSent = {
+      barcode: "P4949683;S2003;D26001;V059428",
+      id: this.response.id
+    }
+
+    console.log('Data to send:', dataSent);
+
+    this.dataTransfer.sendData(dataSent).subscribe(
+      (response: any) => {
+        this.response = response;
+        this.response = {
+          customerName: response.customerName,
+          partName: response.partName,
+          partNumber: response.partNumber,
+        };
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem("scanData", JSON.stringify(response));
+        }
+        if (response.ScanningCompleted === true) {
+          localStorage.removeItem("scanData");
+          this.response = null;
+        }
+        this.zone.run(() => {
+          this.scanResult = response.message;
+          this.cd.detectChanges();
+        });
+      },
+      (error) => {
+        this.errormessage = error.message || 'Unknown error';
+        console.error('Error clearing data on server:', error.message || error);
+        alert('Failed to clear data on server');
+      }
+    );
+    
+
+  }
+
 }
 }

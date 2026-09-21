@@ -1,51 +1,90 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
-  ViewEncapsulation,
+  DestroyRef,
   afterNextRender,
+  computed,
+  inject,
+  signal,
 } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 
-import { startTvDemo } from './tv-demo';
+import { PackingLine, SAMPLE_LINE, StationStatus } from './packing-line';
+
+const STATUS_LABEL: Record<StationStatus, string> = {
+  running: 'Running',
+  waiting: 'Waiting',
+  completed: 'Completed',
+  breakdown: 'Breakdown',
+  idle: 'Idle',
+};
+
+/** Whole-number percentage; 0 when there is no target to measure against. */
+function percent(done: number, target: number): number {
+  return target > 0 ? Math.round((done / target) * 100) : 0;
+}
 
 /**
- * The board.
+ * The packing-line board, for the TV on the floor.
  *
- * The template is the pasted page's markup and nothing else; its stylesheets
- * are global in src/styles.css and its scripts are in ./tv-demo.ts.
- * See the comment at the head of either file for why they cannot live in a
- * component template.
- *
- * There is no state here on purpose. The loop drives the DOM directly, the way
- * it was written to, so there is nothing for change detection to do — hence
- * OnPush and an empty class.
+ * Everything shown is read from `line`. The totals are derived rather than
+ * stored — an anchor's packed / target, the line's overall progress and the
+ * completion figure are sums over the stations — so the header, the anchor
+ * bars and the cards can never disagree with one another.
  */
 @Component({
   selector: 'app-root',
-  standalone: true,
+  imports: [DatePipe, DecimalPipe],
   templateUrl: './app.html',
-  // The board's CSS is global (src/styles.css) and reaches html, body and the
-  // chrome the engine appends to <body>. Emulated encapsulation here would add
-  // per-component attributes to the template's elements but not to the ones the
-  // engine creates at runtime, so the two halves of one board would be styled
-  // by different rules. None keeps them the same.
-  encapsulation: ViewEncapsulation.None,
+  styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent implements OnDestroy {
-  private stop: (() => void) | null = null;
+export class AppComponent {
+  /** The line on show. Sample data for now; set it from the server to go live. */
+  readonly line = signal<PackingLine>(SAMPLE_LINE);
+
+  /** Null until the browser takes over, so the pre-rendered page carries no stale time. */
+  readonly now = signal<Date | null>(null);
+
+  readonly anchors = computed(() =>
+    this.line().anchors.map((anchor) => {
+      const stations = anchor.stations.map((s) => {
+        const pct = percent(s.packed, s.target);
+        return { ...s, label: STATUS_LABEL[s.status], pct, bar: Math.min(pct, 100) };
+      });
+      const packed = stations.reduce((n, s) => n + s.packed, 0);
+      const target = stations.reduce((n, s) => n + s.target, 0);
+      const first = stations[0]?.code ?? '';
+      const last = stations[stations.length - 1]?.code ?? '';
+      return {
+        ...anchor,
+        stations,
+        packed,
+        target,
+        pct: percent(packed, target),
+        range: first === last ? first : `${first} – ${last}`,
+      };
+    }),
+  );
+
+  readonly totals = computed(() => {
+    const packed = this.anchors().reduce((n, a) => n + a.packed, 0);
+    const target = this.anchors().reduce((n, a) => n + a.target, 0);
+    const pct = percent(packed, target);
+    return { packed, target, pct, bar: Math.min(pct, 100) };
+  });
 
   constructor() {
-    // afterNextRender rather than ngAfterViewInit: it never runs on the server,
-    // and it runs after hydration has finished claiming the markup — the engine
-    // rewrites that markup, so starting it any earlier races hydration.
-    afterNextRender(() => {
-      this.stop = startTvDemo();
-    });
-  }
+    const destroyRef = inject(DestroyRef);
 
-  ngOnDestroy(): void {
-    this.stop?.();
-    this.stop = null;
+    // afterNextRender never runs during the build's pre-render, which is what
+    // keeps the build time out of the page: it ships "--:--:--" and the clock
+    // starts on the device.
+    afterNextRender(() => {
+      const tick = () => this.now.set(new Date());
+      tick();
+      const timer = setInterval(tick, 1000);
+      destroyRef.onDestroy(() => clearInterval(timer));
+    });
   }
 }

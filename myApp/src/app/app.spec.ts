@@ -13,15 +13,24 @@ describe('AppComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the stage the loop builds into', async () => {
+  it('renders a card for every station on the line', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    // The engine needs these three to exist before it can build anything; if a
-    // future edit to app.html drops one, the board comes up empty and silent.
-    expect(compiled.querySelector('#fit')).toBeTruthy();
-    expect(compiled.querySelector('#stage')).toBeTruthy();
-    expect(compiled.querySelector('#area')).toBeTruthy();
+    expect(compiled.querySelectorAll('.pl-anchor').length).toBe(2);
+    expect(compiled.querySelectorAll('.pl-card').length).toBe(8);
+  });
+
+  it('derives the anchor and line totals from the stations', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    const [a, b] = app.anchors();
+
+    expect([a.packed, a.target, a.pct]).toEqual([696, 1010, 69]);
+    expect([b.packed, b.target, b.pct]).toEqual([869, 1390, 63]);
+    expect(a.range).toBe('WS-01 – WS-04');
+
+    const totals = app.totals();
+    expect([totals.packed, totals.target, totals.pct]).toEqual([1565, 2400, 65]);
   });
 });

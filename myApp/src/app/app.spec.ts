@@ -1,23 +1,27 @@
 import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { AppComponent } from './app';
 
-describe('App', () => {
+describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [AppComponent],
     }).compileComponents();
   });
 
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+    const fixture = TestBed.createComponent(AppComponent);
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
+  it('should render the stage the loop builds into', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, myApp');
+
+    // The engine needs these three to exist before it can build anything; if a
+    // future edit to app.html drops one, the board comes up empty and silent.
+    expect(compiled.querySelector('#fit')).toBeTruthy();
+    expect(compiled.querySelector('#stage')).toBeTruthy();
+    expect(compiled.querySelector('#area')).toBeTruthy();
   });
 });

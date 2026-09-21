@@ -2,10 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>MyApp</title>
+  <title>Acceedo &mdash; Shopfloor MES &middot; from the gate to the grid</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- viewport-fit=cover so the letterbox runs under a notch instead of
+       leaving a pale bar beside it; the zoom is locked because this is a board
+       being looked at, not a page being read. -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#061420">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- The first paint is the letterbox, not white. styles.css is a round trip
+       away, and a white flash before a dark board reads as a fault. -->
+  <style>html,body{margin:0;height:100%;background:#061420}</style>
 </head>
 <body>
   <app-root></app-root>

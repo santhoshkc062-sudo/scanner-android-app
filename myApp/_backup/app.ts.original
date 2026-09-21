@@ -1,0 +1,233 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  computed,
+  signal,
+} from '@angular/core';
+import { DecimalPipe, NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+
+/* ============================================================
+   MODEL
+   ============================================================ */
+export type WsStatus = 'running' | 'waiting' | 'idle' | 'completed' | 'breakdown';
+
+export interface Workstation {
+  id: string;
+  anchor: 'A' | 'B';
+  status: WsStatus;
+  partNo: string;
+  partName: string;
+  supervisor: string;
+  operator: string;
+  packed: number;
+  target: number;
+  nextNo: string;
+  nextQty: number;
+  /** transient — drives the counter flash animation */
+  flash?: boolean;
+}
+
+/* ============================================================
+   DEMO DATA — 8 workstations across 2 anchors
+   Replace this seed with the live feed (HTTP / socket) later:
+   push new rows into `stations` and the board repaints itself.
+   ============================================================ */
+const SEED: Workstation[] = [
+  { id: 'WS-01', anchor: 'A', status: 'running',   partNo: 'CRK-458912', partName: 'Crankshaft — 4 Cyl Forged',  supervisor: 'John Smith',    operator: 'Rahul',   packed: 190, target: 250, nextNo: 'CRK-458913', nextQty: 300 },
+  { id: 'WS-02', anchor: 'A', status: 'waiting',   partNo: 'CAM-220741', partName: 'Camshaft — Intake Assembly', supervisor: 'Michael Grant', operator: 'David',   packed: 130, target: 220, nextNo: 'CAM-220742', nextQty: 260 },
+  { id: 'WS-03', anchor: 'A', status: 'completed', partNo: 'PST-118305', partName: 'Piston Assembly — 82mm',     supervisor: 'Anita Rao',     operator: 'Suresh',  packed: 300, target: 300, nextNo: 'PST-118306', nextQty: 280 },
+  { id: 'WS-04', anchor: 'A', status: 'breakdown', partNo: 'CYL-770214', partName: 'Cylinder Head — Alloy',      supervisor: 'Peter Wu',      operator: 'Karthik', packed: 68,  target: 240, nextNo: 'CYL-770215', nextQty: 240 },
+
+  { id: 'WS-05', anchor: 'B', status: 'running',   partNo: 'GBX-330918', partName: 'Gearbox Housing — MT6',      supervisor: 'Laura Chen',    operator: 'Imran',   packed: 252, target: 320, nextNo: 'GBX-330919', nextQty: 320 },
+  { id: 'WS-06', anchor: 'B', status: 'idle',      partNo: 'FLY-905117', partName: 'Flywheel — Dual Mass',       supervisor: 'Daniel Cruz',   operator: 'Vignesh', packed: 0,   target: 280, nextNo: 'FLY-905118', nextQty: 200 },
+  { id: 'WS-07', anchor: 'B', status: 'running',   partNo: 'ROD-441026', partName: 'Connecting Rod — Fractured', supervisor: 'Sarah Miller',  operator: 'Ajay',    packed: 300, target: 400, nextNo: 'ROD-441027', nextQty: 400 },
+  { id: 'WS-08', anchor: 'B', status: 'waiting',   partNo: 'VLV-612093', partName: 'Valve Cover — Cast Alu',     supervisor: 'Ramesh Iyer',   operator: 'Manoj',   packed: 302, target: 390, nextNo: 'VLV-612094', nextQty: 300 },
+];
+
+const STATUS_LABEL: Record<WsStatus, string> = {
+  running: 'RUNNING',
+  waiting: 'WAITING',
+  idle: 'IDLE',
+  completed: 'COMPLETED',
+  breakdown: 'BREAKDOWN',
+};
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgTemplateOutlet, DecimalPipe],
+  templateUrl: './app.html',
+  styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AppComponent implements OnInit, OnDestroy {
+  /* ---------- static board identity ---------- */
+  readonly lineName = 'CRANKSHAFT PACKING LINE';
+  readonly lineCode = 'LN-04';
+  readonly factoryName = 'SANDFITS PRECISION WORKS — PLANT 2, COIMBATORE';
+
+  /* ---------- live board state (signals: this app is zoneless) ---------- */
+  readonly stations = signal<Workstation[]>(SEED.map((s) => ({ ...s })));
+
+  readonly anchorA = computed(() => this.stations().filter((s) => s.anchor === 'A'));
+  readonly anchorB = computed(() => this.stations().filter((s) => s.anchor === 'B'));
+
+  readonly totals = computed(() => {
+    let done = 0, target = 0, aDone = 0, aTarget = 0, bDone = 0, bTarget = 0;
+
+    for (const s of this.stations()) {
+      done += s.packed;
+      target += s.target;
+      if (s.anchor === 'A') { aDone += s.packed; aTarget += s.target; }
+      else { bDone += s.packed; bTarget += s.target; }
+    }
+
+    return {
+      done, target, pct: percent(done, target),
+      aDone, aTarget, aPct: percent(aDone, aTarget),
+      bDone, bTarget, bPct: percent(bDone, bTarget),
+    };
+  });
+
+  /* ---------- clock / shift / date ----------
+     Seeded with placeholders so the server-rendered markup matches the
+     first client render; the real values land once hydration completes. */
+  readonly clock = signal('--:--:--');
+  readonly clockMeta = signal('--');
+  readonly shiftName = signal('—');
+  readonly shiftWindow = signal('—');
+  readonly today = signal('—');
+  readonly ping = signal('-- ms');
+
+  private timers: ReturnType<typeof setInterval>[] = [];
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+
+  ngOnInit(): void {
+    // Timers use Date/Math.random — browser only, otherwise SSR and the
+    // hydrated client would disagree on the rendered output.
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.tickClock();
+    this.tickPing();
+
+    this.timers.push(
+      setInterval(() => this.tickClock(), 1000),
+      setInterval(() => this.tickProduction(), 2500),
+      setInterval(() => this.tickStates(), 15000),
+      setInterval(() => this.tickPing(), 5000),
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.timers.forEach(clearInterval);
+    this.timers = [];
+    if (this.flashTimer) clearTimeout(this.flashTimer);
+  }
+
+  /* ---------- template helpers ---------- */
+  pct(s: Workstation): number {
+    return percent(s.packed, s.target);
+  }
+
+  label(s: Workstation): string {
+    return STATUS_LABEL[s.status];
+  }
+
+  /* ==========================================================
+     CLOCK
+     ========================================================== */
+  private tickClock(): void {
+    const d = new Date();
+    const h = d.getHours();
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+
+    this.clock.set(`${pad(h12)}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
+    this.clockMeta.set(`${h < 12 ? 'AM' : 'PM'} · ${DAYS[d.getDay()]}`);
+
+    const shift = shiftFor(h);
+    this.shiftName.set(shift.name);
+    this.shiftWindow.set(`Shift ${shift.code} · ${shift.window}`);
+
+    this.today.set(`${DAYS[d.getDay()]}, ${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`);
+  }
+
+  private tickPing(): void {
+    this.ping.set(`${6 + Math.floor(Math.random() * 18)} ms`);
+  }
+
+  /* ==========================================================
+     LIVE SIMULATION — swap for the real feed when it exists
+     ========================================================== */
+  private tickProduction(): void {
+    this.stations.update((list) =>
+      list.map((s) => {
+        if (s.status !== 'running') return s;
+
+        const packed = Math.min(s.target, s.packed + 1 + Math.floor(Math.random() * 3));
+        const finished = packed >= s.target;
+
+        return { ...s, packed, status: finished ? ('completed' as WsStatus) : s.status, flash: true };
+      }),
+    );
+
+    if (this.flashTimer) clearTimeout(this.flashTimer);
+    this.flashTimer = setTimeout(() => {
+      this.stations.update((list) => list.map((s) => (s.flash ? { ...s, flash: false } : s)));
+    }, 700);
+  }
+
+  private tickStates(): void {
+    this.stations.update((list) =>
+      list.map((s) => {
+        // a finished order rolls over to the next part
+        if (s.status === 'completed' && Math.random() < 0.45) {
+          return {
+            ...s,
+            partNo: s.nextNo,
+            packed: 0,
+            target: s.nextQty,
+            nextNo: bumpPartNo(s.nextNo),
+            nextQty: 200 + Math.floor(Math.random() * 5) * 40,
+            status: 'waiting' as WsStatus,
+          };
+        }
+        if (s.status === 'waiting' && Math.random() < 0.5) return { ...s, status: 'running' as WsStatus };
+        if (s.status === 'idle' && Math.random() < 0.25) return { ...s, status: 'waiting' as WsStatus };
+        return s;
+      }),
+    );
+  }
+}
+
+/* ============================================================
+   PURE HELPERS
+   ============================================================ */
+function percent(done: number, target: number): number {
+  return target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
+}
+
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function shiftFor(hour: number): { name: string; window: string; code: string } {
+  if (hour >= 6 && hour < 14) return { name: 'Morning Shift', window: '06:00 – 14:00', code: 'A' };
+  if (hour >= 14 && hour < 22) return { name: 'Afternoon Shift', window: '14:00 – 22:00', code: 'B' };
+  return { name: 'Night Shift', window: '22:00 – 06:00', code: 'C' };
+}
+
+function bumpPartNo(no: string): string {
+  return no.replace(/(\d+)$/, (m) => String(parseInt(m, 10) + 1).padStart(m.length, '0'));
+}

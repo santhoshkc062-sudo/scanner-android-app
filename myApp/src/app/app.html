@@ -6,7 +6,7 @@
       <div class="pl-eyebrow">
         <span class="pl-dot"></span>
         Production line <span class="pl-sep">&middot;</span> {{ line().code }}
-        <span class="pl-sep">&middot;</span> Live
+        <span class="pl-sep">&middot;</span> {{ feed.status() === 'live' ? 'Live' : 'Offline' }}
       </div>
       <h1 class="pl-title">{{ line().name }}</h1>
     </div>
@@ -74,12 +74,17 @@
             </div>
 
             <dl class="pl-meta">
-              <dt>Supervisor</dt>
-              <dd>{{ s.supervisor }}</dd>
+              <dt>Customer</dt>
+              <dd>{{ s.customer }}</dd>
               <dt>Operator</dt>
               <dd>{{ s.operator }}</dd>
               <dt>Next part</dt>
-              <dd>{{ s.nextPartNo }}<span class="pl-qty">Qty</span>{{ s.nextQty }}</dd>
+              <dd>
+                {{ s.nextPartNo }}
+                @if (s.nextQty) {
+                  <span class="pl-qty">Qty</span>{{ s.nextQty }}
+                }
+              </dd>
             </dl>
 
             <div class="pl-packed">
@@ -94,6 +99,8 @@
               <span class="pl-pct">{{ s.pct }}%</span>
             </div>
           </article>
+        } @empty {
+          <div class="pl-empty">No machines placed on {{ anchor.name }}</div>
         }
       </div>
     }
@@ -102,8 +109,8 @@
   <!-- Footer: where, when, and the state of the systems behind the board -->
   <footer class="pl-foot">
     <div class="pl-foot-info">
-      <span class="pl-foot-k">Factory</span>
-      <span class="pl-foot-v">{{ line().factory }}</span>
+      <span class="pl-foot-k">Customer</span>
+      <span class="pl-foot-v">{{ line().customer }}</span>
       <span class="pl-foot-k pl-foot-gap">Date</span>
       <span class="pl-foot-v">{{ (now() | date: 'EEEE, dd MMMM y') ?? '—' }}</span>
     </div>
@@ -120,7 +127,43 @@
           }
         </span>
       }
+      <button type="button" class="pl-chip pl-chip-btn" (click)="openSettings()">Settings</button>
     </div>
   </footer>
+
+  <!-- Settings: which server feeds the board, and which line it shows -->
+  @if (settingsOpen()) {
+    <div class="pl-set-scrim">
+      <form class="pl-set" (submit)="$event.preventDefault(); saveSettings()">
+        <h2 class="pl-set-title">Board settings</h2>
+
+        <label class="pl-set-k" for="pl-set-server">Server address</label>
+        <div class="pl-set-row">
+          <input id="pl-set-server" class="pl-set-input" type="text" inputmode="url"
+                 placeholder="192.168.1.5:3001" autocomplete="off"
+                 [value]="draftServer()" (input)="draftServer.set(valueOf($event))">
+          <button type="button" class="pl-set-btn" (click)="connectDraft()">Connect</button>
+        </div>
+
+        <label class="pl-set-k" for="pl-set-line">Line</label>
+        <select id="pl-set-line" class="pl-set-input" (change)="draftLine.set(valueOf($event))">
+          @for (l of lines(); track l.LINE_CODE) {
+            <option [value]="l.LINE_CODE" [selected]="l.LINE_CODE === draftLine()">
+              {{ l.LINE_CODE }} &middot; {{ l.LINE_NAME }}
+            </option>
+          } @empty {
+            <option value="" disabled selected>Connect to load lines</option>
+          }
+        </select>
+
+        <div class="pl-set-foot">
+          @if (server()) {
+            <button type="button" class="pl-set-btn" (click)="cancelSettings()">Cancel</button>
+          }
+          <button type="submit" class="pl-set-btn pl-set-primary" [disabled]="!draftServer().trim()">Save</button>
+        </div>
+      </form>
+    </div>
+  }
 
 </main>

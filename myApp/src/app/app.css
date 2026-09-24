@@ -586,6 +586,27 @@
   color: #7db2ff;
 }
 
+.pl-chip[data-tone='warn'] {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+/* The Settings chip is the one control on the board — reachable with the
+   remote's D-pad, so its focus has to be unmistakable from across the floor. */
+.pl-chip-btn {
+  color: var(--pl-soft);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pl-chip-btn:focus,
+.pl-chip-btn:hover {
+  outline: none;
+  border-color: var(--pl-blue-br);
+  color: var(--pl-text);
+}
+
 .pl-chip-dot {
   flex: none;
   width: calc(6 * var(--u));
@@ -608,4 +629,107 @@
   .pl-card[data-status='breakdown'] .pl-pill {
     animation: none;
   }
+}
+
+/* ── empty anchor ─────────────────────────────────────────────────────────── */
+
+.pl-empty {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  min-height: calc(120 * var(--u));
+  border: 1px dashed var(--pl-line);
+  border-radius: calc(8 * var(--u));
+  font-size: calc(14 * var(--u));
+  font-weight: 600;
+  color: var(--pl-dim);
+}
+
+/* ── settings ─────────────────────────────────────────────────────────────── */
+
+.pl-set-scrim {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  background: rgba(4, 7, 11, 0.78);
+}
+
+.pl-set {
+  display: grid;
+  grid-row-gap: calc(10 * var(--u));
+  width: calc(560 * var(--u));
+  padding: calc(26 * var(--u)) calc(28 * var(--u));
+  border: 1px solid var(--pl-line);
+  border-radius: calc(10 * var(--u));
+  background: var(--pl-panel);
+}
+
+.pl-set-title {
+  margin: 0 0 calc(6 * var(--u));
+  font-family: var(--pl-cond);
+  font-size: calc(26 * var(--u));
+  font-weight: 700;
+}
+
+.pl-set-k {
+  margin-top: calc(6 * var(--u));
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pl-muted);
+}
+
+.pl-set-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column-gap: calc(10 * var(--u));
+}
+
+.pl-set-input,
+.pl-set-btn {
+  height: calc(44 * var(--u));
+  padding: 0 calc(14 * var(--u));
+  border: 1px solid var(--pl-line);
+  border-radius: calc(6 * var(--u));
+  background: var(--pl-card);
+  color: var(--pl-text);
+  font-family: inherit;
+  font-size: calc(16 * var(--u));
+}
+
+.pl-set-btn {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pl-set-input:focus,
+.pl-set-btn:focus {
+  outline: none;
+  border-color: var(--pl-blue-br);
+  box-shadow: 0 0 0 calc(2 * var(--u)) rgba(91, 155, 255, 0.35);
+}
+
+.pl-set-primary {
+  border-color: var(--pl-blue);
+  background: var(--pl-blue);
+}
+
+.pl-set-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pl-set-foot {
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: calc(10 * var(--u));
+  justify-content: end;
+  margin-top: calc(12 * var(--u));
 }

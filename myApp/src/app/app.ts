@@ -111,7 +111,7 @@ export class AppComponent {
     const updated = this.feed.updatedAt();
     const chips: SystemChip[] = [
       status === 'live'
-        ? { label: 'Live', detail: 'socket', tone: 'ok' }
+        ? { label: 'Live', detail: '', tone: 'ok' }
         : status === 'connecting'
           ? { label: 'Connecting', tone: 'info' }
           : { label: 'Offline', detail: 'polling', tone: 'warn' },
@@ -121,7 +121,7 @@ export class AppComponent {
       const hh = String(updated.getHours()).padStart(2, '0');
       const mm = String(updated.getMinutes()).padStart(2, '0');
       const ss = String(updated.getSeconds()).padStart(2, '0');
-      chips.push({ label: 'Updated', detail: `${hh}:${mm}:${ss}`, tone: 'plain' });
+      // chips.push({ label: 'Updated', detail: `${hh}:${mm}:${ss}`, tone: 'plain' });
     }
     return chips;
   });

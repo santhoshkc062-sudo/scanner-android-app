@@ -564,7 +564,7 @@
   padding: calc(5 * var(--u)) calc(11 * var(--u));
   border: 1px solid var(--pl-line);
   border-radius: calc(5 * var(--u));
-  background: #131b25;
+  background: #3b82f6;
   font-size: calc(10.5 * var(--u));
   font-weight: 800;
   line-height: 1;

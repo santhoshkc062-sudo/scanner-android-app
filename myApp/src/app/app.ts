@@ -4,12 +4,14 @@ import {
   DestroyRef,
   afterNextRender,
   computed,
+  effect,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
-import { PackingLine, StationStatus, SystemChip } from './packing-line';
+import { PackingLine, Station, StationStatus, SystemChip } from './packing-line';
 import { toPackingLine } from './smes-data';
 import { BoardFeed, LINE_KEY, SERVER_KEY, normaliseServer } from './services/board-feed';
 
@@ -21,9 +23,39 @@ const STATUS_LABEL: Record<StationStatus, string> = {
   idle: 'Idle',
 };
 
+/** How long a running station may go without a new count before its card
+ *  turns red and starts timing. */
+const STALL_MS = 10 * 60_000;
+
+/** Where the count marks are saved, so a reboot resumes the stall timers. */
+const MARKS_KEY = 'tvCountMarks';
+
+/** What the board last read on a station, and when it first read it. */
+interface CountMark {
+  /** The part on the station, so a new job counts as movement too. */
+  job: string;
+  packed: number;
+  /** Epoch ms. */
+  at: number;
+}
+
 /** Whole-number percentage; 0 when there is no target to measure against. */
 function percent(done: number, target: number): number {
   return target > 0 ? Math.round((done / target) * 100) : 0;
+}
+
+/** 12:05, or 1:12:05 once past the hour. */
+function stopwatch(ms: number): string {
+  const secs = Math.floor(ms / 1000);
+  const h = Math.floor(secs / 3600);
+  const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+  const ss = String(secs % 60).padStart(2, '0');
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/** Marks are kept per line, so re-pinning the TV starts that line afresh. */
+function markKey(line: PackingLine, s: Station): string {
+  return `${line.code}|${s.code}`;
 }
 
 /** Storage can throw in a locked-down WebView; the board must still come up. */
@@ -40,6 +72,15 @@ function writeStore(key: string, value: string): void {
     localStorage.setItem(key, value);
   } catch {
     /* not persisted — the TV asks again after a reboot */
+  }
+}
+
+function readMarks(): Record<string, CountMark> {
+  try {
+    const marks = JSON.parse(readStore(MARKS_KEY) || '{}');
+    return marks && typeof marks === 'object' ? marks : {};
+  } catch {
+    return {};
   }
 }
 
@@ -164,8 +205,63 @@ export class AppComponent {
     return { packed, target, pct, bar: Math.min(pct, 100) };
   });
 
+  /** When each station's count last moved, as far as this board has seen: the
+   *  server keeps no time per count. Stamped with the fetch that brought the
+   *  change, and the same object is handed back while nothing moves, so the
+   *  save below runs only on a real change. */
+  private readonly marks = linkedSignal<PackingLine, Record<string, CountMark>>({
+    source: this.line,
+    computation: (line, previous) => {
+      const prev = previous?.value ?? readMarks();
+      // Nothing fetched yet (or reconnecting): keep what the board already knows.
+      if (!line.anchors.length) return prev;
+      const at = this.feed.updatedAt()?.getTime() ?? Date.now();
+      const next: Record<string, CountMark> = {};
+      let moved = false;
+      for (const anchor of line.anchors) {
+        for (const s of anchor.stations) {
+          const key = markKey(line, s);
+          const job = `${s.partNo}|${s.partName}`;
+          const old = prev[key];
+          // A mark from the future means the clock was set back; start again.
+          if (old && old.job === job && old.packed === s.packed && old.at <= at) {
+            next[key] = old;
+          } else {
+            next[key] = { job, packed: s.packed, at };
+            moved = true;
+          }
+        }
+      }
+      return moved || Object.keys(next).length !== Object.keys(prev).length ? next : prev;
+    },
+  });
+
+  /** Running stations whose count has not moved for STALL_MS, by code, with
+   *  how long it has been. Rebuilt every second for the timers, but it is a
+   *  subtraction per station, and only a stalled card's text changes. */
+  readonly stalls = computed(() => {
+    const marks = this.marks();
+    const now = this.now()?.getTime();
+    const stalled = new Map<string, string>();
+    // With the server out of reach the counts on screen are stale, and a
+    // machine that is still packing would be flagged as stopped.
+    if (!now || this.feed.fetchError()) return stalled;
+    const line = this.line();
+    for (const anchor of line.anchors) {
+      for (const s of anchor.stations) {
+        const at = marks[markKey(line, s)]?.at;
+        if (s.status === 'running' && at != null && now - at >= STALL_MS) {
+          stalled.set(s.code, stopwatch(now - at));
+        }
+      }
+    }
+    return stalled;
+  });
+
   constructor() {
     const destroyRef = inject(DestroyRef);
+
+    effect(() => writeStore(MARKS_KEY, JSON.stringify(this.marks())));
 
     // afterNextRender never runs during the build's pre-render, which is what
     // keeps the build time out of the page — and the feed off the build

@@ -64,13 +64,21 @@
         </div>
 
         @for (s of anchor.stations; track s.code) {
-          <article class="pl-card" [attr.data-status]="s.status">
+          @let stall = stalls().get(s.code);
+          <article class="pl-card" [attr.data-status]="s.status" [class.pl-stalled]="!!stall">
             <span class="pl-ws">{{ s.code }}</span>
             <span class="pl-pill"><i class="pl-pill-dot"></i>{{ s.label }}</span>
 
             <div class="pl-part">
               <div class="pl-part-no">{{ s.partNo }}</div>
               <div class="pl-part-name">{{ s.partName }}</div>
+              <!-- Running, but no new count for STALL_MS: the time since the last one -->
+              @if (stall) {
+                <div class="pl-stall">
+                  <span class="pl-stall-k">No inspection for</span>
+                  <span class="pl-stall-v">{{ stall }}</span>
+                </div>
+              }
             </div>
 
             <dl class="pl-meta">

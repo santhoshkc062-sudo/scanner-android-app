@@ -324,6 +324,18 @@
   --n: #c9d2dc;
 }
 
+/* Running, but no new count for STALL_MS (app.ts): the frame turns red,
+   doubled by an inset ring so the layout does not shift. The pill, number
+   and bar stay green, because the job is still on the station. It has only
+   stopped counting. */
+.pl-card.pl-stalled {
+  border-color: #ef4444;
+  box-shadow:
+    inset 0 0 0 1px #ef4444,
+    inset calc(3 * var(--u)) 0 0 #ef4444,
+    0 0 calc(18 * var(--u)) rgba(239, 68, 68, 0.35);
+}
+
 .pl-ws {
   grid-area: ws;
   align-self: center;
@@ -384,6 +396,27 @@
   min-width: 0;
 }
 
+/* While the stall timer shows, it sits centred in the space between the part
+   number and the customer column, whatever the screen's width. The number
+   keeps its full width first; the name runs on beneath it up to the timer. */
+.pl-stalled .pl-part {
+  display: grid;
+  grid-template-columns: auto minmax(calc(12 * var(--u)), 1fr) auto minmax(0, 1fr);
+}
+
+.pl-stalled .pl-part-no {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+}
+
+.pl-stalled .pl-part-name {
+  grid-column: 1 / 3;
+  grid-row: 2;
+  align-self: start;
+  padding-right: calc(12 * var(--u));
+}
+
 .pl-part-no {
   overflow: hidden;
   font-family: var(--pl-cond);
@@ -404,6 +437,40 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--pl-soft);
+}
+
+/* Pulses like a breakdown pill, to be seen from across the floor. */
+.pl-stall {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: center;
+  display: grid;
+  justify-items: center;
+  padding: calc(5 * var(--u)) calc(12 * var(--u)) calc(6 * var(--u));
+  border: 1px solid rgba(239, 68, 68, 0.75);
+  border-radius: calc(6 * var(--u));
+  background: rgba(239, 68, 68, 0.12);
+  animation: pl-alarm 1.6s ease-in-out infinite;
+}
+
+.pl-stall-k {
+  font-size: calc(10 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fca5a5;
+}
+
+.pl-stall-v {
+  margin-top: calc(3 * var(--u));
+  font-family: var(--pl-cond);
+  font-size: calc(26 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: #f87171;
 }
 
 .pl-meta {
@@ -626,7 +693,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pl-card[data-status='breakdown'] .pl-pill {
+  .pl-card[data-status='breakdown'] .pl-pill,
+  .pl-stall {
     animation: none;
   }
 }

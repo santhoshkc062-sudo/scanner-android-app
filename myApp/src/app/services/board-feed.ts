@@ -4,7 +4,7 @@ import { Subject, Subscription, asyncScheduler, catchError, forkJoin, interval, 
 // Type only — the client itself is imported lazily in start().
 import type io from 'socket.io-client';
 
-import { AnchorMapping, BoardSnapshot, SmesLine, SmesShift } from '../smes-data';
+import { AnchorMapping, BoardSnapshot, PartCompletion, SmesLine, SmesShift } from '../smes-data';
 
 /** Where the server address lives — the same key the scanner screen uses. */
 export const SERVER_KEY = 'serverIp';
@@ -14,6 +14,10 @@ export const LINE_KEY = 'tvLineCode';
 /** The event the server emits after any write that changes the board —
  *  AnchorMappingController, LineController and the MQTT box counter. */
 const BOARD_EVENT = 'anchorMappingUpdate';
+/** Emitted the moment a box closes, with the line it closed on. */
+const COMPLETED_EVENT = 'partCompleted';
+/** More boxes than one line closes in a shift. */
+const COMPLETIONS_PAGE = 500;
 /** Safety net for a dropped socket. The push is the real trigger. */
 const POLL_MS = 30_000;
 /** One MQTT frame can carry several machines, each nudging the board. The
@@ -40,7 +44,10 @@ export function normaliseServer(raw: string): string {
  *
  * Refetches whenever the server pushes `anchorMappingUpdate` over socket.io —
  * just the anchor mappings when the push says only a queue changed, everything
- * otherwise — and all of it every POLL_MS in case a push was missed. Only ever started in the browser — never during the pre-render.
+ * otherwise — and all of it every POLL_MS in case a push was missed. Beside
+ * the board it keeps the watched line's closed boxes, refetched on each
+ * `partCompleted` push. Only ever started in the browser — never during the
+ * pre-render.
  */
 @Injectable({ providedIn: 'root' })
 export class BoardFeed {
@@ -55,8 +62,13 @@ export class BoardFeed {
   readonly updatedAt = signal<Date | null>(null);
   /** The last fetch failed (server unreachable); the previous snapshot stays up. */
   readonly fetchError = signal(false);
+  /** Boxes closed on the watched line since the watched time, newest first;
+   *  null until they have been read for the line and time now watched. */
+  readonly completions = signal<PartCompletion[] | null>(null);
 
   private refresh$ = new Subject<void>();
+  private completions$ = new Subject<void>();
+  private watched: { line: string; from: string } | null = null;
   /** Set when any push since the last fetch needs more than the boards. Kept
    *  outside the stream so the throttle cannot drop a `line` push in favour of
    *  a later `board` one. */
@@ -72,6 +84,7 @@ export class BoardFeed {
     // and would only notice after the ~30 s heartbeat timeout. Refetch now,
     // and cycle the socket so pushes resume straight away.
     this.request('all');
+    this.completions$.next();
     if (this.socket) {
       this.socket.close();
       this.socket.open();
@@ -112,6 +125,19 @@ export class BoardFeed {
         this.updatedAt.set(new Date());
       });
 
+    // A different server has different boxes.
+    this.completions.set(null);
+    this.sub.add(
+      merge(
+        this.completions$.pipe(throttleTime(PUSH_THROTTLE_MS, asyncScheduler, { leading: true, trailing: true })),
+        interval(POLL_MS),
+      )
+        .pipe(startWith(void 0), switchMap(() => this.fetchCompletions()))
+        .subscribe((rows) => {
+          if (rows) this.completions.set(rows);
+        }),
+    );
+
     // Loaded lazily so the socket client never enters the server bundle's
     // pre-render path. v2 client, to match the server's socket.io 2.x.
     const { default: connect } = await import('socket.io-client');
@@ -125,12 +151,38 @@ export class BoardFeed {
       this.status.set('live');
       // Catch up on anything pushed while disconnected.
       this.request('all');
+      this.completions$.next();
     }));
     socket.on('disconnect', () => this.zone.run(() => this.status.set('offline')));
     socket.on('connect_error', () => this.zone.run(() => this.status.set('offline')));
     socket.on(BOARD_EVENT, (payload?: { scope?: string }) =>
       this.zone.run(() => this.request(payload?.scope === 'board' ? 'board' : 'all')));
+    // Every line's boxes are pushed to every screen; only this line's matter.
+    socket.on(COMPLETED_EVENT, (payload?: { lineCode?: string }) =>
+      this.zone.run(() => {
+        if (!payload?.lineCode || payload.lineCode === this.watched?.line) this.completions$.next();
+      }));
     this.socket = socket;
+  }
+
+  /** Keeps `completions` to the boxes closed on `line` since `from` (ISO).
+   *  Safe to call on every change of either; the same pair is a no-op. */
+  watchCompletions(line: string, from: string): void {
+    if (this.watched?.line === line && this.watched.from === from) return;
+    this.watched = line ? { line, from } : null;
+    this.completions.set(null);
+    this.completions$.next();
+  }
+
+  private fetchCompletions() {
+    const watched = this.watched;
+    if (!this.server || !watched) return of(null);
+    const params = { line: watched.line, from: watched.from, size: String(COMPLETIONS_PAGE) };
+    return this.http.get<{ rows: PartCompletion[] }>(`${this.server}/part-completion`, { params }).pipe(
+      // A line switched mid-flight answers the question before last.
+      map((res) => (this.watched === watched ? res?.rows || [] : null)),
+      catchError(() => of(null)),
+    );
   }
 
   /** Refetch now — for a line change, which needs no new connection. */
@@ -151,6 +203,7 @@ export class BoardFeed {
     this.sub?.unsubscribe();
     this.sub = undefined;
     this.socket?.off(BOARD_EVENT);
+    this.socket?.off(COMPLETED_EVENT);
     this.socket?.close();
     this.socket = undefined;
   }

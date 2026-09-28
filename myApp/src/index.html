@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="en">
+<!-- The board is light, so the letterbox is too. Set on the elements rather
+     than in the <style> below because styles.css, generated from an older dark
+     design, loads later and would paint them dark again. -->
+<html lang="en" style="background:#eef1f6">
 <head>
   <meta charset="utf-8">
   <title>Acceedo &mdash; Shopfloor MES &middot; from the gate to the grid</title>
@@ -10,18 +13,18 @@
        being looked at, not a page being read. -->
   <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#061420">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0d3352">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-  <!-- The first paint is the letterbox, not white. styles.css is a round trip
-       away, and a white flash before a dark board reads as a fault. -->
-  <style>html,body{margin:0;height:100%;background:#061420}</style>
+  <!-- The first paint is the board's own ground. styles.css is a round trip
+       away, and a flash of another colour before the board reads as a fault. -->
+  <style>html,body{margin:0;height:100%;background:#eef1f6}</style>
 </head>
-<body>
+<body style="background:#eef1f6">
   <app-root></app-root>
 </body>
 </html>

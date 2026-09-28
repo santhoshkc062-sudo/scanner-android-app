@@ -1,5 +1,10 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   The packing-line board.
+   The packing-line board, in the SMES light theme.
+
+   The palette is the application's own (main-ui theme/custom-theme/
+   _smes-variables.scss and its wall screen, tv-screen/tv-line): a cool grey
+   ground, white cards, navy for structure and teal for what is running, with
+   the SMES amber, blue and red tints for waiting, done and alarms.
 
    Authored on a 1600 × 900 grid: every size is a multiple of --u, one grid
    pixel, which tracks whichever screen axis is tighter. The board therefore
@@ -15,23 +20,42 @@
 .pl {
   --u: 1px;
 
-  --pl-bg: #0a0f16;
-  --pl-panel: #10161f;
-  --pl-card: #111821;
-  --pl-line: #1e2935;
-  --pl-track: #1b2531;
-  --pl-text: #e9eef4;
-  --pl-soft: #b8c3cf;
-  --pl-muted: #7a8898;
-  --pl-dim: #5b6a7d;
-  --pl-blue: #3b82f6;
-  --pl-blue-br: #5b9bff;
-  --pl-green: #22c55e;
+  --bg: #eef1f6;
+  --card: #ffffff;
+  --card-head: #f8fafd;
+  --shade: #f4f7fa;
+  --line: #dde3ec;
+  --line-soft: #e8edf3;
+  --track: #e3e9f0;
+  --text: #1c2b3a;
+  --text-2: #4a5a6a;
+  --muted: #8898aa;
+  --navy: #0d3352;
+  --navy-2: #164472;
+  --teal: #0e8a72;
+  --teal-dk: #0c7a5e;
+  --teal-lt: #e0f5ee;
+  --teal-bd: #9fe1cb;
+  --amber: #d9900f;
+  --amber-dk: #7a4800;
+  --amber-lt: #fef3e0;
+  --amber-bd: #fac775;
+  --blue: #378add;
+  --blue-dk: #1558a0;
+  --blue-lt: #e6f1fb;
+  --blue-bd: #b5d4f4;
+  --red: #d64545;
+  --red-dk: #9b2626;
+  --red-lt: #fdecec;
+  --red-bd: #f7c1c1;
+  --black: #111;
 
-  --pl-font: Roboto, 'Segoe UI', system-ui, sans-serif;
-  /* 'sans-serif-condensed' is Android's own name for Roboto Condensed, so the
-     TV needs no font download; the rest are for a desktop browser. */
-  --pl-cond: 'Roboto Condensed', 'sans-serif-condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --font: Roboto, 'Segoe UI', system-ui, sans-serif;
+  /* 'sans-serif-condensed' is Android's own name for Roboto Condensed, and
+     'monospace' its Droid Sans Mono, so the TV needs no font download; the
+     rest are for a desktop browser. */
+  --cond: 'Roboto Condensed', 'sans-serif-condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --mono: 'Roboto Mono', 'Droid Sans Mono', Consolas, monospace;
 
   position: fixed;
   top: 0;
@@ -39,13 +63,13 @@
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   grid-row-gap: calc(12 * var(--u));
-  padding: calc(16 * var(--u)) calc(20 * var(--u));
+  padding: calc(14 * var(--u)) calc(18 * var(--u)) calc(16 * var(--u));
   overflow: hidden;
-  background: var(--pl-bg);
-  color: var(--pl-text);
-  font-family: var(--pl-font);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
   line-height: 1.2;
 }
 
@@ -60,539 +84,913 @@
 .pl-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-column-gap: calc(32 * var(--u));
+  grid-column-gap: calc(28 * var(--u));
   align-items: center;
-  padding: calc(14 * var(--u)) calc(26 * var(--u)) calc(14 * var(--u)) calc(26 * var(--u));
-  background: linear-gradient(180deg, #121a24, #0f151d);
-  border: 1px solid var(--pl-line);
-  border-radius: calc(10 * var(--u));
-  box-shadow: inset calc(3 * var(--u)) 0 0 var(--pl-blue);
+  padding: calc(11 * var(--u)) calc(18 * var(--u)) calc(11 * var(--u)) calc(22 * var(--u));
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: calc(12 * var(--u));
+  box-shadow: inset calc(4 * var(--u)) 0 0 var(--teal);
 }
 
-.pl-head-id {
+.pl-id {
   min-width: 0;
 }
 
-.pl-eyebrow {
+.pl-brand {
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--teal);
+}
+
+.pl-dot-sep {
+  margin: 0 0.3em;
+  color: var(--muted);
+}
+
+.pl-title-row {
   display: flex;
   align-items: center;
-  font-size: calc(11.5 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--pl-muted);
-  white-space: nowrap;
-}
-
-.pl-dot {
-  flex: none;
-  width: calc(7 * var(--u));
-  height: calc(7 * var(--u));
-  margin-right: calc(9 * var(--u));
-  border-radius: 50%;
-  background: var(--pl-green);
-  box-shadow: 0 0 calc(6 * var(--u)) rgba(34, 197, 94, 0.8);
-}
-
-.pl-sep {
-  margin: 0 calc(6 * var(--u));
-  color: var(--pl-dim);
+  min-width: 0;
+  margin-top: calc(3 * var(--u));
 }
 
 .pl-title {
-  margin: calc(4 * var(--u)) 0 0;
+  min-width: 0;
+  margin: 0;
   overflow: hidden;
-  font-family: var(--pl-cond);
-  font-size: calc(38 * var(--u));
+  font-size: calc(32 * var(--u));
   font-weight: 700;
   line-height: 1.05;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--navy);
+}
+
+.pl-code {
+  flex: none;
+  margin-left: calc(12 * var(--u));
+  padding: calc(3 * var(--u)) calc(8 * var(--u));
+  border-radius: calc(4 * var(--u));
+  background: var(--navy);
+  font-family: var(--mono);
+  font-size: calc(13 * var(--u));
+  font-weight: 700;
   color: #fff;
 }
 
-.pl-stats {
+.pl-kpis {
   display: grid;
   grid-auto-flow: column;
-  grid-column-gap: calc(44 * var(--u));
-  align-items: start;
+  grid-column-gap: calc(26 * var(--u));
+  align-items: center;
 }
 
-.pl-stat {
+.pl-kpi {
   display: grid;
   grid-row-gap: calc(3 * var(--u));
   justify-items: start;
+  min-width: calc(120 * var(--u));
 }
 
-.pl-stat-k {
-  font-size: calc(10.5 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--pl-muted);
-}
-
-.pl-stat-v {
-  font-family: var(--pl-cond);
-  font-size: calc(25 * var(--u));
-  font-weight: 700;
-  line-height: 1.1;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-}
-
-.pl-stat-v small {
-  font-size: 0.86em;
-  color: var(--pl-soft);
-}
-
-.pl-stat-s {
-  font-size: calc(10.5 * var(--u));
+.pl-kpi-k {
+  font-size: calc(10 * var(--u));
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--pl-dim);
+  color: var(--muted);
 }
 
-.pl-stat-done .pl-stat-v {
-  font-size: calc(30 * var(--u));
-  color: var(--pl-blue-br);
+.pl-kpi-v {
+  font-family: var(--cond);
+  font-size: calc(24 * var(--u));
+  font-weight: 700;
+  line-height: 1.05;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.pl-kpi-v small {
+  font-size: 0.72em;
+  color: var(--muted);
+}
+
+.pl-kpi-v-time {
+  font-size: calc(20 * var(--u));
+}
+
+.pl-kpi-s {
+  font-size: calc(10.5 * var(--u));
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-2);
 }
 
 .pl-meter {
   display: block;
-  width: calc(140 * var(--u));
-  height: calc(4 * var(--u));
-  margin-top: calc(3 * var(--u));
+  width: calc(130 * var(--u));
+  height: calc(5 * var(--u));
   overflow: hidden;
   border-radius: 99px;
-  background: var(--pl-track);
+  background: var(--track);
 }
 
 .pl-meter i {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--pl-blue);
+  background: var(--teal);
 }
 
-/* ── the two anchors ──────────────────────────────────────────────────────── */
+/* Machines stopped: the whole figure turns red, so it is read from the far end. */
+.pl-kpi-attn {
+  padding: calc(5 * var(--u)) calc(10 * var(--u));
+  margin: calc(-5 * var(--u)) calc(-10 * var(--u));
+  border: 1px solid transparent;
+  border-radius: calc(8 * var(--u));
+}
 
-.pl-anchors {
+.pl-kpi-alert {
+  border-color: var(--red-bd);
+  background: var(--red-lt);
+}
+
+.pl-kpi-alert .pl-kpi-k,
+.pl-kpi-alert .pl-kpi-s {
+  color: var(--red-dk);
+}
+
+.pl-kpi-alert .pl-kpi-v {
+  color: var(--red);
+}
+
+.pl-clock {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-column-gap: calc(16 * var(--u));
+  grid-row-gap: calc(3 * var(--u));
+  justify-items: end;
+  padding-left: calc(24 * var(--u));
+  border-left: 1px solid var(--line);
+}
+
+.pl-clock-v {
+  font-family: var(--cond);
+  font-size: calc(28 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.pl-clock-v small {
+  margin-left: calc(4 * var(--u));
+  font-size: 0.5em;
+  color: var(--muted);
+}
+
+.pl-clock-s {
+  font-size: calc(10.5 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pl-status {
+  display: grid;
+  grid-row-gap: calc(6 * var(--u));
+  justify-items: stretch;
+}
+
+.pl-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(5 * var(--u)) calc(11 * var(--u));
+  border: 1px solid var(--line);
+  border-radius: calc(5 * var(--u));
+  background: var(--shade);
+  font-family: inherit;
+  font-size: calc(10 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-2);
+}
+
+.pl-chip[data-tone='ok'] {
+  border-color: var(--teal-bd);
+  background: var(--teal-lt);
+  color: var(--teal-dk);
+}
+
+.pl-chip[data-tone='info'] {
+  border-color: var(--blue-bd);
+  background: var(--blue-lt);
+  color: var(--blue-dk);
+}
+
+.pl-chip[data-tone='warn'] {
+  border-color: var(--amber-bd);
+  background: var(--amber-lt);
+  color: var(--amber-dk);
+}
+
+.pl-chip-dot {
+  flex: none;
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  margin-right: calc(6 * var(--u));
+  border-radius: 50%;
+  background: currentColor;
+  animation: pl-blink 2s ease-in-out infinite;
+}
+
+/* The one control on the board — reachable with the remote's D-pad, so its
+   focus has to be unmistakable from across the floor. */
+.pl-chip-btn {
+  border-color: var(--navy);
+  background: var(--card);
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.pl-chip-btn:focus,
+.pl-chip-btn:hover {
+  outline: none;
+  background: var(--navy);
+  color: #fff;
+}
+
+/* ── the floor: two anchors and the boxes beside them ─────────────────────── */
+
+.pl-floor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) calc(292 * var(--u));
+  grid-column-gap: calc(14 * var(--u));
   min-height: 0;
 }
 
-/* The stations share whatever height is left equally, however many there are. */
+/* The machines share whatever height is left equally, however many there are. */
 .pl-anchor {
   display: grid;
   grid-template-rows: auto;
   grid-auto-rows: minmax(0, 1fr);
-  grid-row-gap: calc(10 * var(--u));
+  grid-row-gap: calc(9 * var(--u));
+  min-width: 0;
   min-height: 0;
 }
 
 .pl-anchor-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-column-gap: calc(14 * var(--u));
+  grid-column-gap: calc(12 * var(--u));
   align-items: center;
-  padding: calc(8 * var(--u)) calc(16 * var(--u)) calc(8 * var(--u)) calc(12 * var(--u));
-  background: var(--pl-panel);
-  border: 1px solid var(--pl-line);
-  border-radius: calc(8 * var(--u));
-}
-
-.pl-badge {
-  display: grid;
-  place-items: center;
-  width: calc(28 * var(--u));
-  height: calc(28 * var(--u));
-  border: 1px solid rgba(59, 130, 246, 0.65);
-  border-radius: calc(6 * var(--u));
-  background: rgba(59, 130, 246, 0.14);
-  font-size: calc(14 * var(--u));
-  font-weight: 700;
-  color: var(--pl-blue-br);
-}
-
-.pl-anchor-id {
-  min-width: 0;
+  padding: calc(8 * var(--u)) calc(10 * var(--u)) calc(8 * var(--u)) calc(14 * var(--u));
+  border-radius: calc(9 * var(--u));
+  background: var(--navy);
+  color: #fff;
 }
 
 .pl-anchor-name {
-  font-size: calc(16 * var(--u));
+  font-size: calc(14 * var(--u));
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #fff;
+  white-space: nowrap;
 }
 
 .pl-anchor-sub {
-  margin-top: calc(3 * var(--u));
+  overflow: hidden;
   font-size: calc(10.5 * var(--u));
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--pl-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .pl-anchor-sum {
-  text-align: right;
-}
-
-.pl-anchor-pct {
-  font-family: var(--pl-cond);
-  font-size: calc(19 * var(--u));
+  font-family: var(--cond);
+  font-size: calc(13 * var(--u));
   font-weight: 700;
-  color: #fff;
-}
-
-.pl-anchor-cnt {
-  margin-top: calc(2 * var(--u));
-  font-size: calc(11 * var(--u));
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  color: var(--pl-dim);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* ── station card ─────────────────────────────────────────────────────────── */
+.pl-anchor-sum b {
+  margin-left: calc(8 * var(--u));
+  padding: calc(2 * var(--u)) calc(7 * var(--u));
+  border-radius: 99px;
+  background: #fff;
+  color: var(--navy);
+}
 
-/* --c is the status colour, --c-rgb the same colour for the tints, and --n
-   the colour of the big packed number (white while waiting or idle). */
+.pl-empty {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  border: 1px dashed var(--line);
+  border-radius: calc(10 * var(--u));
+  font-size: calc(13 * var(--u));
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ── machine card ─────────────────────────────────────────────────────────── */
+
+/* --c is the status colour, with its tint, border and ink beside it. Five
+   zones across — the machine, the part, who it is for and who is on it, how
+   it is going, the box — and the next box on a strip underneath.
+
+   The part keeps room for its number however narrow the card, and gives up
+   the rest in proportion, so on a wide screen the people stay close beside
+   the part and the spare width goes to the middle, not into one gap. */
 .pl-card {
-  --c: #6b7684;
-  --c-rgb: 107, 118, 132;
-  --n: var(--pl-text);
+  --c: var(--teal);
+  --c-lt: var(--teal-lt);
+  --c-bd: var(--teal-bd);
+  --c-dk: var(--teal-dk);
 
   display: grid;
-  /* Floors on the people and packed columns line them up from card to card;
-     they still grow for a longer name or a four-digit count. */
   grid-template-columns:
-    minmax(0, 1fr)
-    minmax(calc(236 * var(--u)), auto)
-    minmax(calc(150 * var(--u)), auto);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+    calc(62 * var(--u))
+    minmax(calc(145 * var(--u)), 0.9fr)
+    minmax(0, 0.85fr)
+    minmax(0, 1.15fr)
+    calc(158 * var(--u));
+  grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
-    'ws   ws   pill'
-    'part meta packed'
-    'bar  bar  bar';
-  grid-column-gap: calc(26 * var(--u));
-  grid-row-gap: calc(4 * var(--u));
+    'spine main people activity dial'
+    'strip strip strip strip strip';
   min-height: 0;
-  padding: calc(10 * var(--u)) calc(18 * var(--u)) calc(10 * var(--u)) calc(20 * var(--u));
   overflow: hidden;
-  background: var(--pl-card);
-  border: 1px solid rgba(var(--c-rgb), 0.55);
-  border-radius: calc(9 * var(--u));
-  box-shadow:
-    inset calc(3 * var(--u)) 0 0 var(--c),
-    0 0 calc(18 * var(--u)) rgba(var(--c-rgb), 0.14);
-}
-
-.pl-card[data-status='running'] {
-  --c: #22c55e;
-  --c-rgb: 34, 197, 94;
-  --n: #22c55e;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: calc(10 * var(--u));
+  box-shadow: inset calc(5 * var(--u)) 0 0 var(--c);
 }
 
 .pl-card[data-status='waiting'] {
-  --c: #f5a524;
-  --c-rgb: 245, 165, 36;
+  --c: var(--amber);
+  --c-lt: var(--amber-lt);
+  --c-bd: var(--amber-bd);
+  --c-dk: var(--amber-dk);
 }
 
 .pl-card[data-status='completed'] {
-  --c: #3b82f6;
-  --c-rgb: 59, 130, 246;
-  --n: #5b9bff;
+  --c: var(--blue);
+  --c-lt: var(--blue-lt);
+  --c-bd: var(--blue-bd);
+  --c-dk: var(--blue-dk);
 }
 
 .pl-card[data-status='breakdown'] {
-  --c: #ef4444;
-  --c-rgb: 239, 68, 68;
-  --n: #ef4444;
+  --c: var(--red);
+  --c-lt: var(--red-lt);
+  --c-bd: var(--red-bd);
+  --c-dk: var(--red-dk);
 }
 
 .pl-card[data-status='idle'] {
-  --n: #c9d2dc;
+  --c: #b9c4d4;
+  --c-lt: var(--shade);
+  --c-bd: var(--line);
+  --c-dk: var(--muted);
+  background: #f7f9fc;
 }
 
-/* Running, but no new count for STALL_MS (app.ts): the frame turns red,
-   doubled by an inset ring so the layout does not shift. The pill, number
-   and bar stay green, because the job is still on the station. It has only
-   stopped counting. */
-.pl-card.pl-stalled {
-  border-color: #ef4444;
+/* Counting: the whole frame goes green, so which machines are packing reads
+   from across the floor. Every frame is doubled by a ring just outside the
+   border, which shifts no layout; a ring inside it would be hidden along the
+   left and the bottom, under the spine and the strip. Must stay above the
+   stall rule, which takes over when a running machine stops. */
+.pl-card[data-status='running'] {
+  border-color: var(--teal);
+  background: #f7fcfa;
   box-shadow:
-    inset 0 0 0 1px #ef4444,
-    inset calc(3 * var(--u)) 0 0 #ef4444,
-    0 0 calc(18 * var(--u)) rgba(239, 68, 68, 0.35);
+    0 0 0 1px var(--teal),
+    0 0 calc(14 * var(--u)) rgba(14, 138, 114, 0.22);
 }
 
-.pl-ws {
-  grid-area: ws;
-  align-self: center;
-  font-family: var(--pl-cond);
-  font-size: calc(25 * var(--u));
+/* Not counting, and not idle either — waiting for its first piece, or its
+   queue done: the frame goes black, so a machine that needs someone to get it
+   going stands out from the rest. */
+.pl-card[data-status='waiting'],
+.pl-card[data-status='completed'] {
+  border-color: var(--black);
+  box-shadow:
+    0 0 0 1px var(--black),
+    0 0 calc(14 * var(--u)) rgba(0, 0, 0, 0.18);
+}
+
+/* Running, but no new count for STALL_MS (app.ts): the frame turns red. The
+   pill and the dial stay in the running colour, because the job is still on
+   the machine. It has only stopped counting. */
+.pl-card.pl-stalled {
+  border-color: var(--red);
+  background: #fff8f8;
+  box-shadow:
+    0 0 0 1px var(--red),
+    0 0 calc(14 * var(--u)) rgba(214, 69, 69, 0.28);
+}
+
+.pl-spine {
+  grid-area: spine;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  grid-row-gap: calc(6 * var(--u));
+  min-width: 0;
+  padding: calc(8 * var(--u)) calc(4 * var(--u)) calc(8 * var(--u)) calc(9 * var(--u));
+  background: var(--shade);
+  border-right: 1px solid var(--line-soft);
+}
+
+/* The machine is what the floor calls a station by; the cell is where it sits. */
+.pl-mc {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(19 * var(--u));
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.1em;
-  color: #fff;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--navy);
+}
+
+.pl-cell {
+  padding: calc(2 * var(--u)) calc(5 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: var(--c-lt);
+  font-size: calc(9 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--c-dk);
+}
+
+.pl-main {
+  grid-area: main;
+  display: grid;
+  align-content: center;
+  grid-row-gap: calc(3 * var(--u));
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: calc(8 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u)) calc(14 * var(--u));
+}
+
+/* Idle, or the queue finished: the card says so and stays quiet. */
+.pl-main-quiet {
+  grid-column: main / dial;
+}
+
+.pl-quiet {
+  font-size: calc(22 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-dk);
+}
+
+.pl-card[data-status='idle'] .pl-quiet {
+  color: var(--muted);
+}
+
+.pl-quiet-sub {
+  overflow: hidden;
+  font-size: calc(12 * var(--u));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pl-meta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pl-meta > * + * {
+  margin-left: calc(8 * var(--u));
 }
 
 .pl-pill {
-  grid-area: pill;
-  justify-self: end;
-  align-self: center;
+  flex: none;
   display: flex;
   align-items: center;
-  padding: calc(4 * var(--u)) calc(10 * var(--u));
-  border: 1px solid rgba(var(--c-rgb), 0.75);
-  border-radius: calc(5 * var(--u));
-  background: rgba(var(--c-rgb), 0.12);
-  font-size: calc(11 * var(--u));
+  padding: calc(3 * var(--u)) calc(8 * var(--u));
+  border: 1px solid var(--c-bd);
+  border-radius: calc(4 * var(--u));
+  background: var(--c-lt);
+  font-size: calc(10 * var(--u));
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--c);
+  color: var(--c-dk);
 }
 
 .pl-pill-dot {
   flex: none;
-  width: calc(7 * var(--u));
-  height: calc(7 * var(--u));
-  margin-right: calc(7 * var(--u));
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  margin-right: calc(6 * var(--u));
   border-radius: 50%;
   background: var(--c);
 }
 
-/* A breakdown carries no dot; it pulses instead, so it is seen from across the floor. */
-.pl-card[data-status='breakdown'] .pl-pill {
+/* The component name is the headline, whole on one line. The column is narrow
+   on a 16:9 panel, so a name too long for it is set smaller until it fits
+   (FitLine sets --fit), in a line box that stays the same height; only a name
+   too long even then loses its end. */
+.pl-name {
+  margin: calc(2 * var(--u)) 0;
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(22 * var(--u) * var(--fit, 1));
+  font-weight: 700;
+  line-height: calc(25 * var(--u));
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--navy);
+}
+
+.pl-partno {
+  overflow: hidden;
+  font-size: calc(12.5 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--teal-dk);
+}
+
+/* ── who, and how it is going ─────────────────────────────────────────────── */
+
+/* Each column is a stack of facts at their own height, centred as a group in
+   the card's height. */
+.pl-stack {
+  display: grid;
+  grid-auto-rows: max-content;
+  grid-row-gap: calc(12 * var(--u));
+  align-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding: calc(10 * var(--u)) calc(5 * var(--u));
+}
+
+.pl-people {
+  grid-area: people;
+}
+
+.pl-activity {
+  grid-area: activity;
+  padding-right: calc(10 * var(--u));
+}
+
+/* A fact on its own — customer, operator, last piece: a small label over its
+   value, centred, with no box around it. */
+.pl-fact {
+  justify-self: center;
+  display: grid;
+  justify-items: center;
+  grid-row-gap: calc(3 * var(--u));
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.pl-fact-k {
+  font-size: calc(9 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pl-fact-v {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: calc(16 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+/* Not known yet: a dash, kept quiet. */
+.pl-fact-none {
+  color: #b9c4d4;
+}
+
+/* Something to say instead — the first piece still awaited, a box just
+   closed, the counting stopped: a compact box at its own size, centred in
+   the space, not a panel filling it. */
+.pl-flag {
+  align-self: center;
+  justify-self: center;
+  display: grid;
+  justify-items: center;
+  max-width: 100%;
+  padding: calc(4 * var(--u)) calc(10 * var(--u)) calc(5 * var(--u));
+  border: 1px solid;
+  border-radius: calc(6 * var(--u));
+  text-align: center;
+}
+
+.pl-flag-k {
+  font-size: calc(9.5 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pl-flag-v {
+  margin-top: calc(2 * var(--u));
+  font-family: var(--cond);
+  font-size: calc(24 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Routine, not an alarm: the quietest of the three. */
+.pl-waiting {
+  border-color: var(--amber-bd);
+  background: var(--amber-lt);
+  color: var(--amber-dk);
+}
+
+.pl-waiting .pl-flag-v {
+  font-size: calc(16 * var(--u));
+}
+
+.pl-closed {
+  border-color: var(--teal);
+  background: var(--teal-lt);
+  color: var(--teal-dk);
+}
+
+.pl-closed .pl-flag-v {
+  color: var(--teal);
+}
+
+/* Pulses between two tints of red, to be seen across the floor. */
+.pl-stall {
+  border-color: #eaa1a1;
+  background: var(--red-lt);
+  color: var(--red-dk);
   animation: pl-alarm 1.6s ease-in-out infinite;
 }
 
-.pl-card[data-status='breakdown'] .pl-pill-dot {
-  display: none;
+.pl-stall .pl-flag-v {
+  color: var(--red);
 }
 
 @keyframes pl-alarm {
   50% {
-    background: rgba(239, 68, 68, 0.34);
+    background: #f9d3d3;
   }
 }
 
-.pl-part {
-  grid-area: part;
-  align-self: center;
-  min-width: 0;
-}
+/* ── the box dial ─────────────────────────────────────────────────────────── */
 
-/* While the stall timer shows, it sits centred in the space between the part
-   number and the customer column, whatever the screen's width. The number
-   keeps its full width first; the name runs on beneath it up to the timer. */
-.pl-stalled .pl-part {
+.pl-dial {
+  grid-area: dial;
   display: grid;
-  grid-template-columns: auto minmax(calc(12 * var(--u)), 1fr) auto minmax(0, 1fr);
+  align-content: center;
+  justify-items: center;
+  grid-row-gap: calc(4 * var(--u));
+  min-width: 0;
+  padding: calc(6 * var(--u)) calc(8 * var(--u));
+  border-left: 1px solid var(--line-soft);
 }
 
-.pl-stalled .pl-part-no {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: end;
-}
-
-.pl-stalled .pl-part-name {
-  grid-column: 1 / 3;
-  grid-row: 2;
-  align-self: start;
-  padding-right: calc(12 * var(--u));
-}
-
-.pl-part-no {
-  overflow: hidden;
-  font-family: var(--pl-cond);
-  font-size: calc(26 * var(--u));
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.06em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #fff;
-}
-
-.pl-part-name {
-  margin-top: calc(2 * var(--u));
-  overflow: hidden;
-  font-size: calc(12.5 * var(--u));
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--pl-soft);
-}
-
-/* Pulses like a breakdown pill, to be seen from across the floor. */
-.pl-stall {
-  grid-column: 3;
-  grid-row: 1 / 3;
-  align-self: center;
+.pl-gauge {
+  position: relative;
   display: grid;
   justify-items: center;
-  padding: calc(5 * var(--u)) calc(12 * var(--u)) calc(6 * var(--u));
-  border: 1px solid rgba(239, 68, 68, 0.75);
-  border-radius: calc(6 * var(--u));
-  background: rgba(239, 68, 68, 0.12);
-  animation: pl-alarm 1.6s ease-in-out infinite;
 }
 
-.pl-stall-k {
-  font-size: calc(10 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: #fca5a5;
+.pl-gauge-svg {
+  display: block;
+  width: calc(132 * var(--u));
+  height: calc(74 * var(--u));
 }
 
-.pl-stall-v {
-  margin-top: calc(3 * var(--u));
-  font-family: var(--pl-cond);
-  font-size: calc(26 * var(--u));
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  color: #f87171;
+.pl-gauge-svg path {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
 }
 
-.pl-meta {
-  grid-area: meta;
-  align-self: center;
+.pl-gauge-track {
+  stroke: var(--track);
+}
+
+/* Sweeps to the new count rather than jumping. */
+.pl-gauge-fill {
+  stroke: var(--c);
+  transition: stroke-dashoffset 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Sits inside the arc's opening so the dial reads as one object. */
+.pl-gauge-read {
+  position: absolute;
+  top: calc(24 * var(--u));
   display: grid;
-  grid-template-columns: auto auto;
-  grid-column-gap: calc(14 * var(--u));
-  grid-row-gap: calc(5 * var(--u));
-  margin: 0;
-}
-
-.pl-meta dt,
-.pl-meta dd {
-  margin: 0;
-  line-height: calc(16 * var(--u));
-  white-space: nowrap;
-}
-
-.pl-meta dt {
-  font-size: calc(10.5 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--pl-dim);
-}
-
-.pl-meta dd {
-  font-size: calc(13 * var(--u));
-  font-weight: 700;
-  color: var(--pl-text);
-}
-
-.pl-qty {
-  margin: 0 calc(4 * var(--u)) 0 calc(6 * var(--u));
-  font-weight: 600;
-  color: var(--pl-dim);
-}
-
-.pl-packed {
-  grid-area: packed;
-  align-self: center;
-  justify-self: end;
-  display: grid;
-  justify-items: end;
-}
-
-.pl-packed-k {
-  font-size: calc(10.5 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--pl-dim);
-}
-
-.pl-packed-v {
-  font-family: var(--pl-cond);
-  font-weight: 700;
+  justify-items: center;
   line-height: 1;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 
-.pl-packed-n {
-  font-size: calc(50 * var(--u));
-  color: var(--n);
-}
-
-.pl-packed-t {
-  margin-left: calc(5 * var(--u));
+.pl-gauge-n {
+  font-family: var(--cond);
   font-size: calc(33 * var(--u));
-  color: var(--pl-soft);
-}
-
-.pl-progress {
-  grid-area: bar;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-column-gap: calc(18 * var(--u));
-  align-items: center;
-}
-
-.pl-bar {
-  display: block;
-  height: calc(7 * var(--u));
-  overflow: hidden;
-  border-radius: 99px;
-  background: var(--pl-track);
-}
-
-.pl-bar i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--c);
-  box-shadow: 0 0 calc(8 * var(--u)) rgba(var(--c-rgb), 0.5);
-}
-
-.pl-pct {
-  min-width: calc(46 * var(--u));
-  text-align: right;
-  font-family: var(--pl-cond);
-  font-size: calc(16 * var(--u));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--c);
+  color: var(--navy);
 }
 
-/* ── footer ───────────────────────────────────────────────────────────────── */
+.pl-gauge-t {
+  margin-top: calc(2 * var(--u));
+  font-size: calc(11 * var(--u));
+  font-weight: 600;
+  color: var(--muted);
+}
 
-.pl-foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-column-gap: calc(20 * var(--u));
+/* A piece counted: the number pops and flashes green, so the inspector at the
+   machine sees the scan land from where they stand. The two names are the
+   same animation; switching between them on each rise restarts it. */
+.pl-bump {
+  animation: pl-bump 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pl-bump-alt {
+  animation: pl-bump-alt 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes pl-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.3);
+    color: var(--teal);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pl-bump-alt {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.3);
+    color: var(--teal);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* And how many it went up by rises off the dial and fades. */
+.pl-plus {
+  position: absolute;
+  top: calc(18 * var(--u));
+  left: 50%;
+  margin-left: calc(22 * var(--u));
+  padding: calc(2 * var(--u)) calc(6 * var(--u));
+  border-radius: 99px;
+  background: var(--teal);
+  font-family: var(--cond);
+  font-size: calc(12 * var(--u));
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+  opacity: 0;
+  animation: pl-plus 1.4s ease-out;
+}
+
+.pl-plus-alt {
+  animation-name: pl-plus-alt;
+}
+
+@keyframes pl-plus {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(6 * var(--u)));
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(-14 * var(--u)));
+  }
+}
+
+@keyframes pl-plus-alt {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(6 * var(--u)));
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(-14 * var(--u)));
+  }
+}
+
+/* What is left, spelled out: the floor works to this number, not to a percentage. */
+.pl-togo {
+  font-size: calc(12 * var(--u));
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pl-togo b {
+  font-family: var(--cond);
+  font-size: calc(20 * var(--u));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.pl-togo-due,
+.pl-togo-due b {
+  color: var(--amber-dk);
+}
+
+.pl-eta {
+  font-size: calc(11 * var(--u));
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+/* ── the next box ─────────────────────────────────────────────────────────── */
+
+.pl-strip {
+  grid-area: strip;
+  display: flex;
   align-items: center;
-  padding: calc(8 * var(--u)) calc(18 * var(--u));
-  background: var(--pl-panel);
-  border: 1px solid var(--pl-line);
-  border-radius: calc(8 * var(--u));
+  min-width: 0;
+  min-height: calc(32 * var(--u));
+  overflow: hidden;
+  padding: calc(5 * var(--u)) calc(12 * var(--u)) calc(5 * var(--u)) calc(14 * var(--u));
+  background: #f7f9fc;
+  border-top: 1px solid var(--line-soft);
 }
 
-.pl-foot-info {
+/* Something is queued after this box: it is what the inspector readies next,
+   so it is picked out rather than left in grey. */
+.pl-strip-next {
+  background: #eef8f5;
+  border-top-color: var(--teal-bd);
+}
+
+/* The box is nearly full: the next one is due, so the strip turns amber. */
+.pl-strip-due {
+  background: var(--amber-lt);
+  border-top-color: var(--amber-bd);
+}
+
+.pl-next {
+  flex: 0 1 auto;
   display: flex;
   align-items: baseline;
   min-width: 0;
@@ -600,117 +998,323 @@
   white-space: nowrap;
 }
 
-.pl-foot-k {
-  margin-right: calc(10 * var(--u));
-  font-size: calc(10.5 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--pl-dim);
-}
-
-.pl-foot-v {
-  font-size: calc(13 * var(--u));
-  font-weight: 700;
-  color: var(--pl-soft);
-}
-
-.pl-foot-gap {
-  margin-left: calc(28 * var(--u));
-}
-
-.pl-chips {
-  display: grid;
-  grid-auto-flow: column;
-  grid-column-gap: calc(8 * var(--u));
-}
-
-.pl-chip {
-  display: flex;
-  align-items: center;
-  padding: calc(5 * var(--u)) calc(11 * var(--u));
-  border: 1px solid var(--pl-line);
-  border-radius: calc(5 * var(--u));
-  background: #3b82f6;
-  font-size: calc(10.5 * var(--u));
+.pl-tag {
+  flex: none;
+  align-self: center;
+  margin-right: calc(9 * var(--u));
+  padding: calc(4 * var(--u)) calc(8 * var(--u));
+  border-radius: calc(4 * var(--u));
+  background: var(--teal);
+  font-size: calc(10 * var(--u));
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.pl-strip-due .pl-tag {
+  background: var(--amber);
+}
+
+/* Named as on the card: what it is called first, its number after. */
+.pl-next-name {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(16 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  color: var(--navy);
+}
+
+.pl-next-no {
+  flex: none;
+  margin-left: calc(8 * var(--u));
+  font-size: calc(12.5 * var(--u));
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.pl-next-q {
+  flex: none;
+  margin-left: calc(8 * var(--u));
+  font-size: calc(12 * var(--u));
+  font-weight: 700;
+  color: var(--teal-dk);
+}
+
+.pl-strip-due .pl-next-q {
+  color: var(--amber-dk);
+}
+
+/* Where the next part sits in this product's run. */
+.pl-next-step {
+  flex: none;
+  align-self: center;
+  margin-left: calc(10 * var(--u));
+  font-size: calc(9.5 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--pl-soft);
+  color: var(--muted);
 }
 
-.pl-chip[data-tone='ok'] {
-  border-color: rgba(34, 197, 94, 0.5);
-  background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+.pl-next-none {
+  font-size: calc(11.5 * var(--u));
+  font-style: italic;
+  white-space: nowrap;
+  color: var(--muted);
 }
 
-.pl-chip[data-tone='info'] {
-  border-color: rgba(59, 130, 246, 0.55);
-  background: rgba(59, 130, 246, 0.1);
-  color: #7db2ff;
-}
-
-.pl-chip[data-tone='warn'] {
-  border-color: rgba(245, 158, 11, 0.55);
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-}
-
-/* The Settings chip is the one control on the board — reachable with the
-   remote's D-pad, so its focus has to be unmistakable from across the floor. */
-.pl-chip-btn {
-  color: var(--pl-soft);
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.pl-chip-btn:focus,
-.pl-chip-btn:hover {
-  outline: none;
-  border-color: var(--pl-blue-br);
-  color: var(--pl-text);
-}
-
-.pl-chip-dot {
+.pl-strip-end {
   flex: none;
-  width: calc(6 * var(--u));
-  height: calc(6 * var(--u));
-  margin-right: calc(7 * var(--u));
-  border-radius: 50%;
-  background: currentColor;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: calc(12 * var(--u));
 }
 
-.pl-chip em {
-  margin-left: calc(6 * var(--u));
-  font-style: normal;
+.pl-queued {
+  font-size: calc(11 * var(--u));
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--pl-muted);
+  white-space: nowrap;
+  color: var(--muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pl-card[data-status='breakdown'] .pl-pill,
-  .pl-stall {
-    animation: none;
+.pl-boxes {
+  margin-left: calc(10 * var(--u));
+  padding: calc(3 * var(--u)) calc(7 * var(--u));
+  border-radius: 99px;
+  background: var(--teal-lt);
+  font-size: calc(9.5 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--teal-dk);
+}
+
+/* ── completed boxes ──────────────────────────────────────────────────────── */
+
+.pl-rail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: calc(12 * var(--u));
+}
+
+.pl-panel-head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: calc(9 * var(--u)) calc(14 * var(--u));
+  background: var(--card-head);
+  border-bottom: 1px solid var(--line);
+}
+
+.pl-panel-bar {
+  flex: none;
+  width: calc(3 * var(--u));
+  height: calc(15 * var(--u));
+  margin-right: calc(8 * var(--u));
+  border-radius: 2px;
+  background: var(--teal);
+}
+
+.pl-panel-title {
+  font-size: calc(13 * var(--u));
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.pl-panel-note {
+  margin-left: auto;
+  padding-left: calc(10 * var(--u));
+  font-size: calc(11 * var(--u));
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pl-panel-note b {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* One card per box, newest on top; the ones that do not fit fall off the end. */
+.pl-boxlist {
+  display: grid;
+  grid-auto-rows: max-content;
+  grid-row-gap: calc(7 * var(--u));
+  align-content: start;
+  min-height: 0;
+  overflow: hidden;
+  padding: calc(10 * var(--u));
+}
+
+/* What was packed on the left; how many, large, on the right. */
+.pl-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column-gap: calc(10 * var(--u));
+  align-items: center;
+  padding: calc(8 * var(--u)) calc(12 * var(--u)) calc(8 * var(--u)) calc(14 * var(--u));
+  border: 1px solid var(--line-soft);
+  border-radius: calc(8 * var(--u));
+  background: var(--card);
+  box-shadow: inset calc(3 * var(--u)) 0 0 var(--teal);
+}
+
+.pl-box-short {
+  box-shadow: inset calc(3 * var(--u)) 0 0 var(--amber);
+}
+
+/* Just closed, while the board watched: called out for CLOSED_FLASH_MS. */
+.pl-box-new {
+  border-color: var(--teal-bd);
+  background: var(--teal-lt);
+}
+
+.pl-box-info {
+  display: grid;
+  grid-row-gap: calc(3 * var(--u));
+  min-width: 0;
+}
+
+.pl-box-top {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pl-box-mc {
+  flex: none;
+  padding: calc(2 * var(--u)) calc(5 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: var(--navy);
+  font-family: var(--mono);
+  font-size: calc(10.5 * var(--u));
+  font-weight: 700;
+  color: #fff;
+}
+
+.pl-box-title {
+  min-width: 0;
+  margin-left: calc(8 * var(--u));
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(15 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--navy);
+}
+
+.pl-box-no,
+.pl-box-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pl-box-no {
+  font-size: calc(11.5 * var(--u));
+  font-weight: 700;
+  color: var(--teal-dk);
+}
+
+.pl-box-meta {
+  font-size: calc(10.5 * var(--u));
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.pl-box-qty {
+  display: grid;
+  justify-items: end;
+  grid-row-gap: calc(4 * var(--u));
+}
+
+.pl-box-n {
+  font-family: var(--cond);
+  font-size: calc(26 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.pl-box-n small {
+  margin-left: calc(1 * var(--u));
+  font-size: 0.55em;
+  color: var(--muted);
+}
+
+.pl-box-s {
+  padding: calc(3 * var(--u)) calc(7 * var(--u));
+  border-radius: 99px;
+  background: var(--teal-lt);
+  font-size: calc(9 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--teal-dk);
+}
+
+.pl-box-new .pl-box-s {
+  background: var(--teal);
+  color: #fff;
+}
+
+.pl-box-short .pl-box-n {
+  color: var(--amber-dk);
+}
+
+.pl-box-short .pl-box-s {
+  background: var(--amber-lt);
+  color: var(--amber-dk);
+}
+
+.pl-box-empty {
+  padding: calc(24 * var(--u)) calc(10 * var(--u));
+  text-align: center;
+  font-size: calc(12 * var(--u));
+  color: var(--muted);
+}
+
+@keyframes pl-blink {
+  50% {
+    opacity: 0.35;
   }
 }
 
-/* ── empty anchor ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pl-stall,
+  .pl-chip-dot,
+  .pl-bump,
+  .pl-bump-alt {
+    animation: none;
+  }
 
-.pl-empty {
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  min-height: calc(120 * var(--u));
-  border: 1px dashed var(--pl-line);
-  border-radius: calc(8 * var(--u));
-  font-size: calc(14 * var(--u));
-  font-weight: 600;
-  color: var(--pl-dim);
+  .pl-gauge-fill {
+    transition: none;
+  }
+
+  /* Still said, just not moved. */
+  .pl-plus {
+    opacity: 1;
+    animation: none;
+  }
 }
 
 /* ── settings ─────────────────────────────────────────────────────────────── */
@@ -725,33 +1329,34 @@
   display: grid;
   align-items: center;
   justify-items: center;
-  background: rgba(4, 7, 11, 0.78);
+  background: rgba(13, 51, 82, 0.45);
 }
 
 .pl-set {
   display: grid;
   grid-row-gap: calc(10 * var(--u));
   width: calc(560 * var(--u));
-  padding: calc(26 * var(--u)) calc(28 * var(--u));
-  border: 1px solid var(--pl-line);
-  border-radius: calc(10 * var(--u));
-  background: var(--pl-panel);
+  padding: calc(24 * var(--u)) calc(28 * var(--u));
+  border: 1px solid var(--line);
+  border-radius: calc(14 * var(--u));
+  background: var(--card);
+  box-shadow: 0 calc(16 * var(--u)) calc(40 * var(--u)) rgba(13, 51, 82, 0.25);
 }
 
 .pl-set-title {
-  margin: 0 0 calc(6 * var(--u));
-  font-family: var(--pl-cond);
-  font-size: calc(26 * var(--u));
+  margin: 0 0 calc(4 * var(--u));
+  font-size: calc(22 * var(--u));
   font-weight: 700;
+  color: var(--navy);
 }
 
 .pl-set-k {
   margin-top: calc(6 * var(--u));
   font-size: calc(11 * var(--u));
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--pl-muted);
+  color: var(--text-2);
 }
 
 .pl-set-row {
@@ -764,10 +1369,10 @@
 .pl-set-btn {
   height: calc(44 * var(--u));
   padding: 0 calc(14 * var(--u));
-  border: 1px solid var(--pl-line);
+  border: 1.5px solid #c5cdd8;
   border-radius: calc(6 * var(--u));
-  background: var(--pl-card);
-  color: var(--pl-text);
+  background: var(--card);
+  color: var(--text);
   font-family: inherit;
   font-size: calc(16 * var(--u));
 }
@@ -780,13 +1385,14 @@
 .pl-set-input:focus,
 .pl-set-btn:focus {
   outline: none;
-  border-color: var(--pl-blue-br);
-  box-shadow: 0 0 0 calc(2 * var(--u)) rgba(91, 155, 255, 0.35);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 calc(3 * var(--u)) rgba(14, 138, 114, 0.2);
 }
 
 .pl-set-primary {
-  border-color: var(--pl-blue);
-  background: var(--pl-blue);
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
 }
 
 .pl-set-primary:disabled {

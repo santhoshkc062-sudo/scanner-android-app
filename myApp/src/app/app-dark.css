@@ -1,0 +1,1267 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   The board's dark theme, switched on and off beside Settings in the header.
+
+   It draws on the same --u grid as the light board (app.css): the dark root is
+   the same .pl element, so it keeps the board's scale and its header-and-floor
+   layout, and redefines the light theme's colour tokens, which is what dresses
+   the settings dialog to match. Everything else is its own dk- classes, laid
+   out as the dark design: tiles across the top, the two anchors, and the
+   boxes and events down the right.
+
+   The same limits as app.css: no inset, no flex gap, no color-mix.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.pl.dk {
+  --bg: #0a1524;
+  --card: #0f1d30;
+  --shade: #14243a;
+  --line: #1c2f47;
+  --line-soft: #172940;
+  --track: #24364e;
+  --text: #e9eff7;
+  --text-2: #a9b8ca;
+  --muted: #7f91a7;
+  /* The count's flash and the rise that floats off it (app.css). */
+  --teal: #22c38e;
+
+  --dk-panel: #0e1c2f;
+  --dk-edge: #1b2d44;
+  --dk-white: #f1f5fa;
+  --dk-soft: #b6c3d3;
+  --dk-dim: #8193a9;
+  --dk-blue: #2f80f5;
+  --dk-blue-hi: #4d93f5;
+  --dk-green: #22c38e;
+  --dk-green-hi: #3fdc9e;
+  --dk-amber: #f2b33d;
+  --dk-red: #ef3b4b;
+  --dk-red-hi: #ff5c68;
+}
+
+/* ── header ───────────────────────────────────────────────────────────────── */
+
+.dk-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column-gap: calc(20 * var(--u));
+  align-items: center;
+}
+
+.dk-id {
+  min-width: 0;
+  padding-left: calc(10 * var(--u));
+}
+
+.dk-crumb {
+  display: flex;
+  align-items: center;
+  font-size: calc(13 * var(--u));
+  white-space: nowrap;
+  color: #8ea0b6;
+}
+
+.dk-crumb b {
+  font-weight: 500;
+  color: #c9d4e2;
+}
+
+.dk-crumb svg {
+  width: calc(11 * var(--u));
+  height: calc(11 * var(--u));
+  margin: 0 calc(8 * var(--u));
+}
+
+.dk-title-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: calc(10 * var(--u));
+}
+
+.dk-title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: calc(36 * var(--u));
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-code {
+  flex: none;
+  margin-left: calc(16 * var(--u));
+  padding: calc(5 * var(--u)) calc(10 * var(--u));
+  border-radius: calc(5 * var(--u));
+  background: #1f6fe6;
+  font-size: calc(13 * var(--u));
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff;
+}
+
+/* The tiles: an icon beside a label, the figure, and its bar or note. */
+.dk-kpis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: calc(14 * var(--u));
+}
+
+.dk-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-column-gap: calc(14 * var(--u));
+  align-items: center;
+  height: calc(90 * var(--u));
+  padding: 0 calc(18 * var(--u)) 0 calc(16 * var(--u));
+  background: var(--dk-panel);
+  border: 1px solid var(--dk-edge);
+  border-radius: calc(8 * var(--u));
+}
+
+.dk-kpi-icon {
+  width: calc(27 * var(--u));
+  height: calc(27 * var(--u));
+  color: var(--dk-blue-hi);
+}
+
+.dk-kpi-icon-teal {
+  color: var(--dk-green);
+}
+
+.dk-kpi-text {
+  display: grid;
+  grid-row-gap: calc(5 * var(--u));
+  min-width: calc(128 * var(--u));
+}
+
+.dk-kpi-k {
+  font-size: calc(10 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #a3b2c5;
+}
+
+.dk-kpi-v {
+  font-family: var(--cond);
+  font-size: calc(21 * var(--u));
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-kpi-v small {
+  font-size: inherit;
+  color: #c9d4e2;
+}
+
+.dk-kpi-s {
+  font-size: calc(11 * var(--u));
+  white-space: nowrap;
+  color: #8fa1b6;
+}
+
+.dk-bar {
+  display: block;
+  height: calc(5 * var(--u));
+  overflow: hidden;
+  border-radius: 99px;
+  background: #203249;
+}
+
+.dk-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dk-blue);
+  transition: width 700ms ease;
+}
+
+.dk-bar-teal i {
+  background: var(--dk-green);
+}
+
+/* Quiet while nothing is stalled; red all over once something is. */
+.dk-kpi-attn .dk-kpi-icon {
+  color: #5d7089;
+}
+
+.dk-kpi-alert {
+  border-color: #b82d3b;
+  background: linear-gradient(135deg, #3a1320, #2a1119);
+}
+
+.dk-kpi-alert .dk-kpi-icon,
+.dk-kpi-alert .dk-kpi-k,
+.dk-kpi-alert .dk-kpi-v,
+.dk-kpi-alert .dk-kpi-s {
+  color: var(--dk-red-hi);
+}
+
+.dk-clock {
+  grid-template-columns: none;
+  align-content: center;
+  justify-items: start;
+  grid-row-gap: calc(8 * var(--u));
+  padding: 0 calc(20 * var(--u));
+}
+
+.dk-clock-v {
+  font-family: var(--cond);
+  font-size: calc(30 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-clock-v small {
+  margin-left: calc(5 * var(--u));
+  font-size: calc(15 * var(--u));
+}
+
+.dk-clock-s {
+  font-size: calc(12.5 * var(--u));
+  white-space: nowrap;
+  color: #b3c0d0;
+}
+
+/* The connection across the top; Settings and the theme switch side by side
+   beneath it, as on the light board. */
+.dk-status {
+  grid-template-columns: auto auto;
+  grid-column-gap: calc(8 * var(--u));
+  grid-row-gap: calc(10 * var(--u));
+  align-content: center;
+  justify-items: stretch;
+  padding: 0 calc(12 * var(--u));
+}
+
+.dk-status > .dk-chip {
+  grid-column: 1 / 3;
+}
+
+.dk-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(5 * var(--u)) calc(10 * var(--u));
+  border-radius: calc(5 * var(--u));
+  background: #16243a;
+  font-size: calc(11 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dk-soft);
+}
+
+.dk-chip[data-tone='ok'] {
+  background: #0f3a2a;
+  color: var(--dk-green-hi);
+}
+
+.dk-chip[data-tone='info'] {
+  background: #10284a;
+  color: var(--dk-blue-hi);
+}
+
+.dk-chip[data-tone='warn'] {
+  background: #3a2c10;
+  color: var(--dk-amber);
+}
+
+.dk-chip-dot {
+  flex: none;
+  width: calc(7 * var(--u));
+  height: calc(7 * var(--u));
+  margin-right: calc(7 * var(--u));
+  border-radius: 50%;
+  background: currentColor;
+  animation: pl-blink 2s ease-in-out infinite;
+}
+
+.dk-set {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(6 * var(--u)) calc(10 * var(--u));
+  border: 1px solid #2a3e58;
+  border-radius: calc(5 * var(--u));
+  background: transparent;
+  font-family: inherit;
+  font-size: calc(10 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #c8d4e2;
+  cursor: pointer;
+}
+
+.dk-set svg {
+  flex: none;
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+  margin-right: calc(7 * var(--u));
+}
+
+.dk-set:focus,
+.dk-set:hover {
+  outline: none;
+  border-color: var(--dk-blue);
+  background: rgba(47, 128, 245, 0.15);
+  color: #fff;
+}
+
+/* The theme's on/off switch, on here; app.css draws it off. */
+.dk-switch {
+  position: relative;
+  flex: none;
+  width: calc(22 * var(--u));
+  height: calc(12 * var(--u));
+  margin-right: calc(7 * var(--u));
+  border-radius: 99px;
+  background: var(--dk-blue);
+}
+
+.dk-switch::after {
+  content: '';
+  position: absolute;
+  top: calc(2 * var(--u));
+  left: calc(12 * var(--u));
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* ── the floor ────────────────────────────────────────────────────────────── */
+
+.dk-floor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) calc(250 * var(--u));
+  grid-column-gap: calc(14 * var(--u));
+  min-height: 0;
+}
+
+.dk-anchor {
+  display: grid;
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(0, 1fr);
+  grid-row-gap: calc(12 * var(--u));
+  min-width: 0;
+  min-height: 0;
+}
+
+.dk-anchor-head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: calc(42 * var(--u));
+  padding: 0 calc(18 * var(--u)) 0 calc(16 * var(--u));
+  background: var(--dk-panel);
+  border: 1px solid var(--dk-edge);
+  border-radius: calc(6 * var(--u));
+}
+
+.dk-anchor-icon {
+  flex: none;
+  width: calc(20 * var(--u));
+  height: calc(20 * var(--u));
+  margin-right: calc(12 * var(--u));
+  color: var(--dk-blue-hi);
+}
+
+.dk-anchor-name {
+  flex: none;
+  font-size: calc(16 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-anchor-range {
+  min-width: 0;
+  margin-left: calc(16 * var(--u));
+  overflow: hidden;
+  font-size: calc(14 * var(--u));
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dk-blue-hi);
+}
+
+.dk-anchor-sum {
+  flex: none;
+  margin-left: auto;
+  padding-left: calc(12 * var(--u));
+  font-size: calc(12.5 * var(--u));
+  font-weight: 600;
+  white-space: nowrap;
+  color: #d3dde9;
+}
+
+.dk-anchor-bar {
+  flex: none;
+  width: calc(150 * var(--u));
+  height: calc(7 * var(--u));
+  margin: 0 calc(18 * var(--u)) 0 calc(14 * var(--u));
+}
+
+.dk-anchor-pct {
+  flex: none;
+  min-width: calc(34 * var(--u));
+  font-size: calc(14 * var(--u));
+  font-weight: 800;
+  text-align: right;
+  color: var(--dk-white);
+}
+
+.dk-empty {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  border: 1px dashed var(--dk-edge);
+  border-radius: calc(8 * var(--u));
+  font-size: calc(13 * var(--u));
+  color: var(--dk-dim);
+}
+
+/* ── the machine card ─────────────────────────────────────────────────────── */
+
+/* The machine, what is on it, who it is for and who is on it, how it is
+   going, the box as a dial — and the next box on a strip below. The machine's
+   column is as wide as its code, whatever font the screen draws it in; a
+   wider screen's extra goes to the part, the people and the alarm, and a name
+   too long for its room shrinks to fit (FitLine). */
+.dk-card {
+  display: grid;
+  grid-template-columns:
+    minmax(calc(64 * var(--u)), auto)
+    minmax(calc(112 * var(--u)), 1.2fr)
+    minmax(calc(76 * var(--u)), 0.65fr)
+    minmax(calc(160 * var(--u)), 1.15fr)
+    calc(140 * var(--u));
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'spine main people activity dial'
+    'strip strip strip strip strip';
+  min-height: 0;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--dk-edge);
+  border-radius: calc(8 * var(--u));
+}
+
+/* Counting: a green frame, as on the light board. Must stay above the stall
+   rule, which takes over when a running machine stops. */
+.dk-card[data-status='running'] {
+  border-color: rgba(34, 195, 142, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(34, 195, 142, 0.35),
+    0 0 calc(16 * var(--u)) rgba(34, 195, 142, 0.12);
+}
+
+.dk-card.dk-stalled {
+  border-color: var(--dk-red);
+  background: linear-gradient(100deg, #2c1322, #1c1627 55%, #151a2b);
+  box-shadow:
+    0 0 0 1px var(--dk-red),
+    0 0 calc(18 * var(--u)) rgba(239, 59, 75, 0.3);
+}
+
+.dk-card[data-status='idle'] {
+  background: #0c1828;
+}
+
+.dk-spine {
+  grid-area: spine;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  grid-row-gap: calc(8 * var(--u));
+  padding: 0 calc(6 * var(--u)) 0 calc(16 * var(--u));
+}
+
+.dk-mc {
+  font-family: var(--cond);
+  font-size: calc(22 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-cell {
+  padding: calc(3 * var(--u)) calc(6 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: #1c2c41;
+  font-size: calc(9.5 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #b9c6d6;
+}
+
+.dk-stalled .dk-cell {
+  background: #7a1c29;
+  color: #ffd4d8;
+}
+
+/* Idle, or the queue finished: the card says so and stays quiet. */
+.dk-quiet {
+  grid-column: main / dial;
+  grid-row: 1;
+  display: grid;
+  align-content: center;
+  grid-row-gap: calc(6 * var(--u));
+  min-width: 0;
+  padding: 0 calc(16 * var(--u)) 0 calc(8 * var(--u));
+}
+
+.dk-quiet-k {
+  font-size: calc(22 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dk-blue-hi);
+}
+
+.dk-card[data-status='idle'] .dk-quiet-k {
+  color: #5d7089;
+}
+
+.dk-quiet-s {
+  overflow: hidden;
+  font-size: calc(12 * var(--u));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dk-dim);
+}
+
+.dk-main {
+  grid-area: main;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  min-width: 0;
+  padding: 0 calc(8 * var(--u)) 0 calc(14 * var(--u));
+}
+
+.dk-pill {
+  display: flex;
+  align-items: center;
+  padding: calc(4 * var(--u)) calc(8 * var(--u));
+  border: 1px solid #1d7a57;
+  border-radius: calc(4 * var(--u));
+  background: #0f3024;
+  font-size: calc(10.5 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dk-green-hi);
+}
+
+.dk-pill i {
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  margin-right: calc(6 * var(--u));
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dk-card[data-status='waiting'] .dk-pill {
+  border-color: #7d5f1d;
+  background: #2c2412;
+  color: var(--dk-amber);
+}
+
+.dk-name {
+  width: 100%;
+  margin-top: calc(9 * var(--u));
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(21 * var(--u) * var(--fit, 1));
+  font-weight: 700;
+  line-height: calc(25 * var(--u));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-partno {
+  width: 100%;
+  margin-top: calc(2 * var(--u));
+  overflow: hidden;
+  font-size: calc(13.5 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2fd49a;
+}
+
+.dk-people {
+  grid-area: people;
+  display: grid;
+  align-content: center;
+  grid-row-gap: calc(14 * var(--u));
+  min-width: 0;
+  padding: 0 calc(6 * var(--u));
+}
+
+.dk-fact {
+  display: grid;
+  grid-row-gap: calc(4 * var(--u));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dk-fact-k {
+  font-size: calc(9.5 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dk-dim);
+}
+
+.dk-fact-v {
+  overflow: hidden;
+  font-size: calc(15 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eef3f9;
+}
+
+.dk-fact-none {
+  color: #4f6178;
+}
+
+.dk-activity {
+  grid-area: activity;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  min-width: 0;
+  padding: 0 calc(6 * var(--u)) 0 calc(4 * var(--u));
+}
+
+/* Something to say instead: an icon beside a small label over its value.
+   Sized so "No inspection for" fits whole in the column's 16:9 width. */
+.dk-flag {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  padding: calc(9 * var(--u)) calc(10 * var(--u)) calc(9 * var(--u)) calc(9 * var(--u));
+  border: 1px solid;
+  border-radius: calc(5 * var(--u));
+}
+
+.dk-flag svg {
+  flex: none;
+  width: calc(21 * var(--u));
+  height: calc(21 * var(--u));
+  margin-right: calc(9 * var(--u));
+}
+
+.dk-flag-text {
+  display: grid;
+  grid-row-gap: calc(3 * var(--u));
+  min-width: 0;
+}
+
+.dk-flag-k {
+  overflow: hidden;
+  font-size: calc(8.75 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dk-flag-v {
+  font-family: var(--cond);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Pulses between two reds, to be seen across the floor. */
+.dk-stall {
+  border-color: #c92f3c;
+  background: #4a1521;
+  color: var(--dk-red-hi);
+  animation: dk-alarm 1.6s ease-in-out infinite;
+}
+
+.dk-stall .dk-flag-k {
+  color: #ff9aa3;
+}
+
+.dk-stall .dk-flag-v {
+  font-size: calc(26 * var(--u));
+  font-variant-numeric: tabular-nums;
+  color: #ff4d5a;
+}
+
+@keyframes dk-alarm {
+  50% {
+    background: #5f1a29;
+  }
+}
+
+.dk-waiting {
+  border-color: #9c7420;
+  background: #2a2213;
+  color: var(--dk-amber);
+}
+
+.dk-waiting .dk-flag-v {
+  font-family: var(--font);
+  font-size: calc(14.5 * var(--u));
+  color: var(--dk-white);
+}
+
+.dk-closed {
+  border-color: #1d8a60;
+  background: #0f2f24;
+  color: var(--dk-green-hi);
+}
+
+.dk-closed .dk-flag-v {
+  font-size: calc(20 * var(--u));
+  color: #e9fff5;
+}
+
+/* The box as a dial. The count pops on a rise with the light board's own
+   animation (pl-bump, pl-plus), flashing this theme's green. */
+.dk-dial {
+  grid-area: dial;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  grid-row-gap: calc(4 * var(--u));
+  min-width: 0;
+  padding: calc(6 * var(--u)) calc(6 * var(--u));
+  border-left: 1px solid var(--dk-edge);
+}
+
+.dk-stalled .dk-dial {
+  border-left-color: rgba(239, 59, 75, 0.25);
+}
+
+.dk-gauge {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.dk-gauge-svg {
+  display: block;
+  width: calc(116 * var(--u));
+  height: calc(65 * var(--u));
+}
+
+.dk-gauge-svg path {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.dk-gauge-track {
+  stroke: #26384f;
+}
+
+.dk-gauge-fill {
+  stroke: var(--dk-green);
+  transition: stroke-dashoffset 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dk-gauge-read {
+  position: absolute;
+  top: calc(20 * var(--u));
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+}
+
+.dk-gauge-n {
+  font-family: var(--cond);
+  font-size: calc(30 * var(--u));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--dk-white);
+}
+
+.dk-gauge-t {
+  margin-top: calc(3 * var(--u));
+  font-size: calc(10.5 * var(--u));
+  font-weight: 600;
+  color: #8a9bb0;
+}
+
+.dk-togo {
+  font-size: calc(13.5 * var(--u));
+  white-space: nowrap;
+  color: #8a9bb0;
+}
+
+.dk-togo b {
+  font-size: calc(16 * var(--u));
+  font-weight: 700;
+  color: var(--dk-white);
+}
+
+.dk-togo-due b {
+  color: var(--dk-amber);
+}
+
+/* What goes in the next box, across the foot of the card: the tag, then the
+   part gliding past as on a station board (pl-ticker, app.css). */
+.dk-strip {
+  grid-area: strip;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: calc(46 * var(--u));
+  overflow: hidden;
+  padding: calc(7 * var(--u)) calc(14 * var(--u));
+  border-top: 1px solid #1a2c43;
+  background: rgba(6, 13, 24, 0.35);
+}
+
+.dk-stalled .dk-strip {
+  border-top-color: rgba(239, 59, 75, 0.3);
+}
+
+.dk-tag {
+  flex: none;
+  margin-right: calc(14 * var(--u));
+  padding: calc(6 * var(--u)) calc(12 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: #14a56f;
+  font-size: calc(13 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* Close to full: the next box is due. */
+.dk-strip-due .dk-tag {
+  background: #d99a1c;
+  color: #1b1405;
+}
+
+.dk-next-name {
+  font-size: calc(20 * var(--u));
+  font-weight: 700;
+  color: var(--dk-white);
+}
+
+.dk-next-no,
+.dk-next-q,
+.dk-next-step {
+  margin-left: calc(14 * var(--u));
+}
+
+.dk-next-no {
+  font-size: calc(16.5 * var(--u));
+  color: #9aabbf;
+}
+
+/* How many go in it: "Qty", small, then the figure. */
+.dk-next-q {
+  font-size: calc(17 * var(--u));
+  font-weight: 700;
+  color: var(--dk-green-hi);
+}
+
+.dk-next-q-k {
+  font-size: calc(11.5 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a9bb0;
+}
+
+.dk-strip-due .dk-next-q {
+  color: var(--dk-amber);
+}
+
+.dk-next-step {
+  font-size: calc(12 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a9bb0;
+}
+
+/* Nothing after this box: said quietly, and still. */
+.dk-next-none {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  font-size: calc(14 * var(--u));
+  font-style: italic;
+  white-space: nowrap;
+  color: #8a9bb0;
+}
+
+.dk-next-none svg {
+  flex: none;
+  width: calc(17 * var(--u));
+  height: calc(17 * var(--u));
+  margin-right: calc(9 * var(--u));
+}
+
+.dk-strip-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-left: auto;
+  padding-left: calc(12 * var(--u));
+}
+
+.dk-note {
+  padding: calc(5 * var(--u)) calc(9 * var(--u));
+  border: 1px solid #22354e;
+  border-radius: calc(4 * var(--u));
+  font-size: calc(12 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #a9b8ca;
+}
+
+.dk-note + .dk-note {
+  margin-left: calc(8 * var(--u));
+}
+
+/* ── boxes and events, down the right ─────────────────────────────────────── */
+
+.dk-rail {
+  display: grid;
+  grid-template-rows: minmax(0, 3fr) minmax(0, 4fr);
+  grid-row-gap: calc(14 * var(--u));
+  min-width: 0;
+  min-height: 0;
+}
+
+.dk-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--dk-panel);
+  border: 1px solid var(--dk-edge);
+  border-radius: calc(8 * var(--u));
+}
+
+.dk-panel-head {
+  display: flex;
+  align-items: center;
+  padding: calc(15 * var(--u)) calc(14 * var(--u)) calc(12 * var(--u));
+}
+
+.dk-panel-head svg {
+  flex: none;
+  width: calc(20 * var(--u));
+  height: calc(20 * var(--u));
+  margin-right: calc(11 * var(--u));
+  color: #c8d4e2;
+}
+
+.dk-panel-title {
+  font-size: calc(14.5 * var(--u));
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-panel-note,
+.dk-panel-link {
+  margin-left: auto;
+  padding-left: calc(8 * var(--u));
+  white-space: nowrap;
+}
+
+.dk-panel-note {
+  font-size: calc(12.5 * var(--u));
+  color: var(--dk-soft);
+}
+
+.dk-panel-link {
+  font-size: calc(12 * var(--u));
+  font-weight: 500;
+  color: var(--dk-blue-hi);
+}
+
+.dk-none {
+  box-sizing: border-box;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  grid-row-gap: calc(14 * var(--u));
+  width: 100%;
+  min-height: 0;
+  padding: 0 calc(16 * var(--u)) calc(16 * var(--u));
+  font-size: calc(13.5 * var(--u));
+  line-height: 1.45;
+  text-align: center;
+  color: #b3c0d0;
+}
+
+.dk-none-art {
+  width: calc(100 * var(--u));
+  height: calc(100 * var(--u));
+}
+
+.dk-none-quiet {
+  padding: calc(24 * var(--u)) 0;
+  font-size: calc(12.5 * var(--u));
+  color: var(--dk-dim);
+}
+
+/* As many rows as the panel holds, and never half of one: a row that does not
+   fit wraps into a second column, off to the right and out of sight. So the
+   rows carry the side padding, not the list. */
+.dk-boxlist,
+.dk-events {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dk-box {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column-gap: calc(10 * var(--u));
+  align-items: center;
+  width: 100%;
+  padding: calc(8 * var(--u)) calc(14 * var(--u)) calc(8 * var(--u)) calc(24 * var(--u));
+  border-top: 1px solid #172a40;
+}
+
+/* Green for a full box, amber for a short one. */
+.dk-box::before {
+  content: '';
+  position: absolute;
+  top: calc(8 * var(--u));
+  bottom: calc(8 * var(--u));
+  left: calc(12 * var(--u));
+  width: calc(3 * var(--u));
+  border-radius: 99px;
+  background: var(--dk-green);
+}
+
+.dk-box-short::before {
+  background: var(--dk-amber);
+}
+
+/* The box that just closed, while it is news. */
+.dk-box-new {
+  background: rgba(34, 195, 142, 0.1);
+}
+
+.dk-box-info {
+  min-width: 0;
+}
+
+.dk-box-top {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dk-box-mc {
+  flex: none;
+  margin-right: calc(7 * var(--u));
+  padding: calc(2 * var(--u)) calc(5 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: #1c2c41;
+  font-size: calc(9.5 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #cfd9e6;
+}
+
+.dk-box-title {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--cond);
+  font-size: calc(14 * var(--u));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dk-white);
+}
+
+.dk-box-no,
+.dk-box-meta {
+  margin-top: calc(2 * var(--u));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dk-box-no {
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  color: #2fd49a;
+}
+
+.dk-box-meta {
+  font-size: calc(10.5 * var(--u));
+  color: var(--dk-dim);
+}
+
+.dk-box-qty {
+  display: grid;
+  justify-items: end;
+  grid-row-gap: calc(3 * var(--u));
+}
+
+.dk-box-n {
+  font-family: var(--cond);
+  font-size: calc(22 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+  color: var(--dk-white);
+}
+
+.dk-box-n small {
+  font-size: calc(12 * var(--u));
+  color: var(--dk-dim);
+}
+
+.dk-box-s {
+  padding: calc(2 * var(--u)) calc(6 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: #0f3a2a;
+  font-size: calc(9 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dk-green-hi);
+}
+
+.dk-box-short .dk-box-s {
+  background: #3a2c10;
+  color: var(--dk-amber);
+}
+
+.dk-event {
+  box-sizing: border-box;
+  display: grid;
+  flex: none;
+  grid-template-columns: calc(9 * var(--u)) auto auto minmax(0, 1fr);
+  grid-column-gap: calc(9 * var(--u));
+  align-items: center;
+  width: 100%;
+  padding: calc(11 * var(--u)) calc(12 * var(--u)) calc(11 * var(--u)) calc(16 * var(--u));
+  font-size: calc(12 * var(--u));
+  white-space: nowrap;
+}
+
+.dk-event-dot {
+  width: calc(9 * var(--u));
+  height: calc(9 * var(--u));
+  border-radius: 50%;
+  background: var(--dk-red);
+}
+
+.dk-event[data-tone='wait'] .dk-event-dot {
+  background: var(--dk-amber);
+}
+
+.dk-event[data-tone='done'] .dk-event-dot {
+  background: var(--dk-green);
+}
+
+.dk-event-t {
+  font-variant-numeric: tabular-nums;
+  color: #b3c0d0;
+}
+
+.dk-event-mc {
+  font-weight: 600;
+  color: var(--dk-white);
+}
+
+.dk-event-x {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #b3c0d0;
+}
+
+/* ── the settings dialog, dark ────────────────────────────────────────────── */
+
+.dk .pl-set-scrim {
+  background: rgba(3, 8, 16, 0.72);
+}
+
+.dk .pl-set {
+  border-color: var(--dk-edge);
+  box-shadow: 0 calc(16 * var(--u)) calc(40 * var(--u)) rgba(0, 0, 0, 0.5);
+}
+
+.dk .pl-set-title {
+  color: var(--dk-white);
+}
+
+.dk .pl-set-input,
+.dk .pl-set-btn {
+  border-color: #2a3f5a;
+  background: #0b1726;
+}
+
+.dk .pl-set-input:focus,
+.dk .pl-set-btn:focus {
+  border-color: var(--dk-blue);
+  box-shadow: 0 0 0 calc(3 * var(--u)) rgba(47, 128, 245, 0.3);
+}
+
+.dk .pl-set-primary {
+  border-color: var(--dk-blue);
+  background: var(--dk-blue);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-stall,
+  .dk-chip-dot {
+    animation: none;
+  }
+
+  .dk-gauge-fill,
+  .dk-bar i {
+    transition: none;
+  }
+}

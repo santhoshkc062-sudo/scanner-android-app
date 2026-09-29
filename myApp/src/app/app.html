@@ -1,264 +1,599 @@
-<main class="pl">
+<main class="pl" [class.dk]="dark()">
 
-  <!-- Header: which line, then the figures the floor looks up for -->
-  <header class="pl-head">
-    <div class="pl-id">
-      <div class="pl-brand">Inspection <span class="pl-dot-sep">&middot;</span> Packing</div>
-      <div class="pl-title-row">
-        <h1 class="pl-title">{{ line().name }}</h1>
-        @if (line().code !== '—') {
-          <span class="pl-code">{{ line().code }}</span>
-        }
-      </div>
-    </div>
+  @if (dark()) {
+    <!-- ══ The dark board: the same figures as the light one, laid out as the
+         dark design. Only one of the two is ever built. ══ -->
 
-    <div class="pl-kpis">
-      <div class="pl-kpi">
-        <span class="pl-kpi-k">{{ line().shift.name }}</span>
-        <span class="pl-kpi-v pl-kpi-v-time">{{ line().shift.start }} &ndash; {{ line().shift.end }}</span>
-        @if (shiftClock(); as sc) {
-          <span class="pl-meter"><i [style.width.%]="sc.pct"></i></span>
-          <span class="pl-kpi-s">{{ sc.left }} left</span>
-        } @else {
-          <span class="pl-kpi-s">&nbsp;</span>
-        }
+    <!-- Header: which line, then the figures the floor looks up for -->
+    <header class="dk-head">
+      <div class="dk-id">
+        <div class="dk-crumb"><b>Inspection</b><svg appIcon="chevron"></svg>Packing</div>
+        <div class="dk-title-row">
+          <h1 class="dk-title">{{ line().name }}</h1>
+          @if (line().code !== '—') {
+            <span class="dk-code">{{ line().code }}</span>
+          }
+        </div>
       </div>
 
-      <div class="pl-kpi">
-        <span class="pl-kpi-k">Overall progress</span>
-        <span class="pl-kpi-v">{{ totals().packed | number }}<small> / {{ totals().target | number }}</small></span>
-        <span class="pl-meter"><i [style.width.%]="totals().bar"></i></span>
-        <span class="pl-kpi-s">{{ totals().pct }}% of parts packed</span>
-      </div>
-
-      <div class="pl-kpi">
-        <span class="pl-kpi-k">Boxes this shift</span>
-        <span class="pl-kpi-v">{{ boxTotals().count | number }}</span>
-        <span class="pl-kpi-s">{{ boxTotals().pieces | number }} pcs packed</span>
-      </div>
-
-      <div class="pl-kpi pl-kpi-attn" [class.pl-kpi-alert]="stalls().size">
-        <span class="pl-kpi-k">Attention</span>
-        <span class="pl-kpi-v">{{ stalls().size }}</span>
-        <span class="pl-kpi-s">{{ stalls().size ? 'no inspection 10+ min' : 'no machine stalled' }}</span>
-      </div>
-
-      <div class="pl-clock">
-        @if (now(); as t) {
-          <span class="pl-clock-v">{{ t | date: 'hh:mm:ss' }}<small>{{ t | date: 'a' }}</small></span>
-          <span class="pl-clock-s">{{ t | date: 'EEEE, d MMM' }}</span>
-        } @else {
-          <span class="pl-clock-v">--:--:--</span>
-          <span class="pl-clock-s">&nbsp;</span>
-        }
-      </div>
-
-      <div class="pl-status">
-        @for (chip of line().systems; track chip.label) {
-          <span class="pl-chip" [attr.data-tone]="chip.tone">
-            @if (chip.tone === 'ok') {
-              <i class="pl-chip-dot"></i>
+      <div class="dk-kpis">
+        <div class="dk-kpi">
+          <svg appIcon="clock" class="dk-kpi-icon"></svg>
+          <div class="dk-kpi-text">
+            <span class="dk-kpi-k">{{ line().shift.name }}</span>
+            <span class="dk-kpi-v">{{ line().shift.start }} &ndash; {{ line().shift.end }}</span>
+            @if (shiftClock(); as sc) {
+              <span class="dk-bar"><i [style.width.%]="sc.pct"></i></span>
+              <span class="dk-kpi-s">{{ sc.left }} left</span>
+            } @else {
+              <span class="dk-bar"><i></i></span>
+              <span class="dk-kpi-s">&nbsp;</span>
             }
-            {{ chip.label }}
-          </span>
-        }
-        <button type="button" class="pl-chip pl-chip-btn" (click)="openSettings()">Settings</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- The floor: the two anchors with their machines, and the boxes closed beside them -->
-  <section class="pl-floor">
-    @for (anchor of anchors(); track anchor.code) {
-      <div class="pl-anchor">
-        <div class="pl-anchor-head">
-          <span class="pl-anchor-name">{{ anchor.name }}</span>
-          <span class="pl-anchor-sub">{{ anchor.range }}</span>
-          <span class="pl-anchor-sum">
-            {{ anchor.packed }} / {{ anchor.target }}<b>{{ anchor.pct }}%</b>
-          </span>
+          </div>
         </div>
 
-        @for (s of anchor.stations; track s.code) {
-          @let stall = stalls().get(s.code);
-          @let rate = pace().get(s.code);
-          @let last = lastPiece().get(s.code);
-          @let box = boxes().get(s.code);
-          @let bump = bumps().get(s.code);
-          <article class="pl-card" [attr.data-status]="s.status" [class.pl-stalled]="!!stall">
-            <!-- Which machine this is, as a spine down the side -->
-            <div class="pl-spine">
-              <span class="pl-mc">{{ s.code }}</span>
-              <span class="pl-cell">Cell {{ s.cellNo }}</span>
-            </div>
+        <div class="dk-kpi">
+          <svg appIcon="layers" class="dk-kpi-icon dk-kpi-icon-teal"></svg>
+          <div class="dk-kpi-text">
+            <span class="dk-kpi-k">Overall progress</span>
+            <span class="dk-kpi-v">{{ totals().packed | number }} <small>/ {{ totals().target | number }}</small></span>
+            <span class="dk-bar dk-bar-teal"><i [style.width.%]="totals().bar"></i></span>
+            <span class="dk-kpi-s">{{ totals().pct }}% of parts packed</span>
+          </div>
+        </div>
 
-            @switch (s.status) {
-              @case ('idle') {
-                <div class="pl-main pl-main-quiet">
-                  <div class="pl-quiet">Idle</div>
-                  <div class="pl-quiet-sub">No product queued{{ s.machineName ? ' · ' + s.machineName : '' }}</div>
-                </div>
+        <div class="dk-kpi">
+          <svg appIcon="cube" class="dk-kpi-icon"></svg>
+          <div class="dk-kpi-text">
+            <span class="dk-kpi-k">Boxes this shift</span>
+            <span class="dk-kpi-v">{{ boxTotals().count | number }}</span>
+            <span class="dk-kpi-s">{{ boxTotals().pieces | number }} pcs packed</span>
+          </div>
+        </div>
+
+        <div class="dk-kpi dk-kpi-attn" [class.dk-kpi-alert]="stalls().size">
+          <svg appIcon="alert" class="dk-kpi-icon"></svg>
+          <div class="dk-kpi-text">
+            <span class="dk-kpi-k">Attention</span>
+            <span class="dk-kpi-v">{{ stalls().size }}</span>
+            <span class="dk-kpi-s">{{ stalls().size ? 'No inspection 10+ min' : 'No machine stalled' }}</span>
+          </div>
+        </div>
+
+        <div class="dk-kpi dk-clock">
+          @if (now(); as t) {
+            <span class="dk-clock-v">{{ t | date: 'hh:mm:ss' }}<small>{{ t | date: 'a' }}</small></span>
+            <span class="dk-clock-s">{{ t | date: 'EEE, d MMM y' }}</span>
+          } @else {
+            <span class="dk-clock-v">--:--:--</span>
+            <span class="dk-clock-s">&nbsp;</span>
+          }
+        </div>
+
+        <!-- The connection, then Settings and the theme switch side by side, as on the light board -->
+        <div class="dk-kpi dk-status">
+          @for (chip of line().systems; track chip.label) {
+            <span class="dk-chip" [attr.data-tone]="chip.tone">
+              @if (chip.tone === 'ok') {
+                <i class="dk-chip-dot"></i>
               }
-              @case ('completed') {
-                <div class="pl-main pl-main-quiet">
-                  <div class="pl-quiet">Queue done</div>
-                  <div class="pl-quiet-sub">Every queued part is packed &mdash; waiting for the next product</div>
-                </div>
-              }
-              @default {
-                <!-- What is being packed -->
-                <div class="pl-main">
-                  <div class="pl-meta">
-                    <span class="pl-pill"><i class="pl-pill-dot"></i>{{ s.label }}</span>
-                  </div>
-                  <!-- What the part is called, large and on one line, with its
-                       number beneath — the number once only, when there is no
-                       component name. -->
-                  @let name = s.partName || s.partNo;
-                  <div class="pl-name" [appFitLine]="name">{{ name }}</div>
-                  @if (s.partNo && s.partNo !== s.partName) {
-                    <div class="pl-partno">{{ s.partNo }}</div>
-                  }
-                </div>
+              {{ chip.label }}
+            </span>
+          }
+          <button type="button" class="dk-set" (click)="openSettings()"><svg appIcon="gear"></svg>Settings</button>
+          <button type="button" class="dk-set dk-theme" aria-label="Dark theme" aria-pressed="true"
+                  (click)="toggleTheme()">
+            <i class="dk-switch"></i>Dark
+          </button>
+        </div>
+      </div>
+    </header>
 
-                <!-- Who it is for, and who is on it -->
-                <div class="pl-stack pl-people">
-                  <div class="pl-fact">
-                    <span class="pl-fact-k">Customer</span>
-                    <span class="pl-fact-v">{{ s.customer || '—' }}</span>
-                  </div>
-                  <div class="pl-fact">
-                    <span class="pl-fact-k">Operator</span>
-                    <span class="pl-fact-v">{{ s.operator || '—' }}</span>
-                  </div>
-                </div>
+    <!-- The floor: the two anchors with their machines, and the boxes and events beside them -->
+    <section class="dk-floor">
+      @for (anchor of anchors(); track anchor.code) {
+        <div class="dk-anchor">
+          <div class="dk-anchor-head">
+            <svg appIcon="board" class="dk-anchor-icon"></svg>
+            <span class="dk-anchor-name">{{ anchor.name }}</span>
+            <span class="dk-anchor-range">{{ anchor.range }}</span>
+            <span class="dk-anchor-sum">{{ anchor.packed }} / {{ anchor.target }}</span>
+            <span class="dk-bar dk-bar-teal dk-anchor-bar"><i [style.width.%]="anchor.pct > 100 ? 100 : anchor.pct"></i></span>
+            <b class="dk-anchor-pct">{{ anchor.pct }}%</b>
+          </div>
 
-                <!-- How it is going: when the last piece came, or a box in its
-                     place when there is something to say -->
-                <div class="pl-stack pl-activity">
-                  @if (stall) {
-                    <!-- Running, but no new count for STALL_MS: the time since the last one -->
-                    <div class="pl-flag pl-stall">
-                      <span class="pl-flag-k">No inspection for</span>
-                      <span class="pl-flag-v pl-stall-v">{{ stall }}</span>
-                    </div>
-                  } @else if (justClosed().has(s.code) && box?.last) {
-                    <!-- The box that just closed, for a minute and a half -->
-                    <div class="pl-flag pl-closed">
-                      <span class="pl-flag-k">&#10003; Box closed</span>
-                      <span class="pl-flag-v">{{ box!.last!.DONE_QTY }} pcs</span>
-                    </div>
-                  } @else if (s.status === 'waiting') {
-                    <div class="pl-flag pl-waiting">
-                      <span class="pl-flag-k">Waiting for</span>
-                      <span class="pl-flag-v">First piece</span>
-                    </div>
-                  } @else {
-                    <div class="pl-fact">
-                      <span class="pl-fact-k">Last piece</span>
-                      <span class="pl-fact-v" [class.pl-fact-none]="!last">{{ last || '—' }}</span>
-                    </div>
-                  }
-                </div>
+          @for (s of anchor.stations; track s.code) {
+            @let stall = stalls().get(s.code);
+            @let last = lastPiece().get(s.code);
+            @let box = boxes().get(s.code);
+            @let bump = bumps().get(s.code);
+            <article class="dk-card" [attr.data-status]="s.status" [class.dk-stalled]="!!stall">
+              <div class="dk-spine">
+                <span class="dk-mc">{{ s.code }}</span>
+                <span class="dk-cell">Cell {{ s.cellNo }}</span>
+              </div>
 
-                <!-- The box as a dial: what is in it, and what is left -->
-                <div class="pl-dial">
-                  <div class="pl-gauge">
-                    <svg class="pl-gauge-svg" viewBox="0 0 100 56" aria-hidden="true">
-                      <path class="pl-gauge-track" d="M 8 50 A 42 42 0 0 1 92 50" />
-                      <path class="pl-gauge-fill" d="M 8 50 A 42 42 0 0 1 92 50"
-                            [attr.stroke-dasharray]="gaugeArc" [attr.stroke-dashoffset]="s.gauge" />
-                    </svg>
-                    <!-- A rise the board saw pops the count and floats the rise;
-                         the two classes alternate on every rise, which is what
-                         restarts the animation without rebuilding anything. -->
-                    <div class="pl-gauge-read">
-                      <span class="pl-gauge-n" [class.pl-bump]="bump && !bump.odd"
-                            [class.pl-bump-alt]="bump?.odd">{{ s.packed }}</span>
-                      <span class="pl-gauge-t">of {{ s.target }}</span>
-                    </div>
-                    @if (bump) {
-                      <span class="pl-plus" [class.pl-plus-alt]="bump.odd">+{{ bump.by }}</span>
+              @switch (s.status) {
+                @case ('idle') {
+                  <div class="dk-quiet">
+                    <div class="dk-quiet-k">Idle</div>
+                    <div class="dk-quiet-s">No product queued{{ s.machineName ? ' · ' + s.machineName : '' }}</div>
+                  </div>
+                }
+                @case ('completed') {
+                  <div class="dk-quiet">
+                    <div class="dk-quiet-k">Queue done</div>
+                    <div class="dk-quiet-s">Every queued part is packed &mdash; waiting for the next product</div>
+                  </div>
+                }
+                @default {
+                  <!-- What is being packed: named large on one line, its number beneath -->
+                  <div class="dk-main">
+                    <span class="dk-pill"><i></i>{{ s.label }}</span>
+                    @let name = s.partName || s.partNo;
+                    <div class="dk-name" [appFitLine]="name">{{ name }}</div>
+                    @if (s.partNo && s.partNo !== s.partName) {
+                      <div class="dk-partno">{{ s.partNo }}</div>
                     }
                   </div>
-                  <div class="pl-togo" [class.pl-togo-due]="s.nearFull"><b>{{ s.remaining }}</b> to go</div>
-                  @if (rate?.eta && !stall) {
-                    <div class="pl-eta">full &asymp; {{ rate!.eta | date: 'h:mm a' }}</div>
-                  }
-                </div>
-              }
-            }
 
-            <!-- What goes in the next box, across the card -->
-            <div class="pl-strip" [class.pl-strip-next]="!!s.nextPartNo" [class.pl-strip-due]="s.nearFull">
-              @if (s.nextPartNo) {
-                <span class="pl-next">
-                  <span class="pl-tag">Next</span>
-                  <span class="pl-next-name">{{ s.nextPartName || s.nextPartNo }}</span>
-                  @if (s.nextPartNo !== s.nextPartName) {
-                    <span class="pl-next-no">{{ s.nextPartNo }}</span>
+                  <div class="dk-people">
+                    <div class="dk-fact">
+                      <span class="dk-fact-k">Customer</span>
+                      <span class="dk-fact-v">{{ s.customer || '—' }}</span>
+                    </div>
+                    <div class="dk-fact">
+                      <span class="dk-fact-k">Operator</span>
+                      <span class="dk-fact-v">{{ s.operator || '—' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- How it is going: an alarm, a box just closed, the first piece awaited, or the last piece -->
+                  <div class="dk-activity">
+                    @if (stall) {
+                      <div class="dk-flag dk-stall">
+                        <svg appIcon="alert"></svg>
+                        <span class="dk-flag-text">
+                          <span class="dk-flag-k">No inspection for</span>
+                          <span class="dk-flag-v">{{ stall }}</span>
+                        </span>
+                      </div>
+                    } @else if (justClosed().has(s.code) && box?.last) {
+                      <div class="dk-flag dk-closed">
+                        <svg appIcon="cube"></svg>
+                        <span class="dk-flag-text">
+                          <span class="dk-flag-k">Box closed</span>
+                          <span class="dk-flag-v">{{ box!.last!.DONE_QTY }} pcs</span>
+                        </span>
+                      </div>
+                    } @else if (s.status === 'waiting') {
+                      <div class="dk-flag dk-waiting">
+                        <svg appIcon="hourglass"></svg>
+                        <span class="dk-flag-text">
+                          <span class="dk-flag-k">Waiting for</span>
+                          <span class="dk-flag-v">First piece</span>
+                        </span>
+                      </div>
+                    } @else {
+                      <div class="dk-fact">
+                        <span class="dk-fact-k">Last piece</span>
+                        <span class="dk-fact-v" [class.dk-fact-none]="!last">{{ last || '—' }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- The box as a dial; a rise the board saw pops the count, as on the light board -->
+                  <div class="dk-dial">
+                    <div class="dk-gauge">
+                      <svg class="dk-gauge-svg" viewBox="0 0 100 56" aria-hidden="true">
+                        <path class="dk-gauge-track" d="M 8 50 A 42 42 0 0 1 92 50" />
+                        <path class="dk-gauge-fill" d="M 8 50 A 42 42 0 0 1 92 50"
+                              [attr.stroke-dasharray]="gaugeArc" [attr.stroke-dashoffset]="s.gauge" />
+                      </svg>
+                      <div class="dk-gauge-read">
+                        <span class="dk-gauge-n" [class.pl-bump]="bump && !bump.odd"
+                              [class.pl-bump-alt]="bump?.odd">{{ s.packed }}</span>
+                        <span class="dk-gauge-t">of {{ s.target }}</span>
+                      </div>
+                      @if (bump) {
+                        <span class="pl-plus" [class.pl-plus-alt]="bump.odd">+{{ bump.by }}</span>
+                      }
+                    </div>
+                    <div class="dk-togo" [class.dk-togo-due]="s.nearFull"><b>{{ s.remaining }}</b> to go</div>
+                  </div>
+                }
+              }
+
+              <!-- What goes in the next box, gliding across the card as on a station board -->
+              <div class="dk-strip" [class.dk-strip-due]="s.nearFull">
+                @if (s.nextPartNo) {
+                  <span class="dk-tag">Next</span>
+                  <span class="pl-ticker">
+                    <span class="pl-ticker-run">
+                      <span class="dk-next-name">{{ s.nextPartName || s.nextPartNo }}</span>
+                      @if (s.nextPartNo !== s.nextPartName) {
+                        <span class="dk-next-no">{{ s.nextPartNo }}</span>
+                      }
+                      @if (s.nextQty) {
+                        <span class="dk-next-q"><span class="dk-next-q-k">Qty</span> {{ s.nextQty }}</span>
+                      }
+                      @if (s.nextStep) {
+                        <span class="dk-next-step">Part {{ s.nextStep }}/{{ s.partCount }}</span>
+                      }
+                    </span>
+                  </span>
+                } @else if (s.status === 'running' || s.status === 'waiting') {
+                  <span class="dk-next-none"><svg appIcon="clock"></svg>Last part in the queue</span>
+                }
+                <span class="dk-strip-end">
+                  @if (s.queued) {
+                    <span class="dk-note">+{{ s.queued }} queued</span>
                   }
-                  @if (s.nextQty) {
-                    <span class="pl-next-q">&times; {{ s.nextQty }}</span>
-                  }
-                  @if (s.nextStep) {
-                    <span class="pl-next-step">Part {{ s.nextStep }}/{{ s.partCount }}</span>
+                  @if (box) {
+                    <span class="dk-note">{{ box.count }} {{ box.count === 1 ? 'box' : 'boxes' }}</span>
                   }
                 </span>
-              } @else if (s.status === 'running' || s.status === 'waiting') {
-                <span class="pl-next-none">Last part in the queue</span>
-              }
-              <span class="pl-strip-end">
-                @if (s.queued) {
-                  <span class="pl-queued">+{{ s.queued }} queued</span>
-                }
-                @if (box) {
-                  <span class="pl-boxes">{{ box.count }} {{ box.count === 1 ? 'box' : 'boxes' }}</span>
-                }
-              </span>
-            </div>
-          </article>
-        } @empty {
-          <div class="pl-empty">No machines placed on {{ anchor.name }}</div>
-        }
-      </div>
-    }
+              </div>
+            </article>
+          } @empty {
+            <div class="dk-empty">No machines placed on {{ anchor.name }}</div>
+          }
+        </div>
+      }
 
-    <!-- The boxes the line has closed this shift, newest first -->
-    <aside class="pl-rail">
-      <div class="pl-panel-head">
-        <span class="pl-panel-bar"></span>
-        <span class="pl-panel-title">Completed boxes</span>
-        <span class="pl-panel-note"><b>{{ boxTotals().count }}</b> &middot; {{ boxTotals().pieces | number }} pcs</span>
-      </div>
-      <div class="pl-boxlist">
-        @for (row of recentBoxes(); track row.box._id ?? row.box.COMPLETED_AT) {
-          <div class="pl-box" [class.pl-box-short]="!row.box.IS_FULL" [class.pl-box-new]="row.fresh">
-            <div class="pl-box-info">
-              <!-- Named as on the cards: what the part is called, then its number -->
-              <div class="pl-box-top">
-                <span class="pl-box-mc">{{ row.box.MACHINE_CODE || 'C' + row.box.CELL_NO }}</span>
-                <span class="pl-box-title">{{ row.box.COMP_NAME || row.box.PART_NAME }}</span>
-              </div>
-              @if (row.box.COMP_NAME && row.box.COMP_NAME !== row.box.PART_NAME) {
-                <div class="pl-box-no">{{ row.box.PART_NAME }}</div>
-              }
-              <div class="pl-box-meta">
-                {{ row.box.COMPLETED_AT | date: 'h:mm a' }}{{ row.box.WORKER_NAME ? ' · ' + row.box.WORKER_NAME : '' }}
-              </div>
-            </div>
-            <!-- What went in the box, large: the figure the list is read for -->
-            <div class="pl-box-qty">
-              <span class="pl-box-n">{{ row.box.DONE_QTY }}<small>/{{ row.box.PACKING_QTY }}</small></span>
-              <span class="pl-box-s">{{ row.box.IS_FULL ? 'Full' : 'Short ' + row.box.SHORT_BY }}</span>
-            </div>
+      <aside class="dk-rail">
+        <!-- The boxes the line has closed this shift, newest first -->
+        <div class="dk-panel">
+          <div class="dk-panel-head">
+            <svg appIcon="cube"></svg>
+            <span class="dk-panel-title">Completed boxes</span>
+            <span class="dk-panel-note">{{ boxTotals().pieces | number }} pcs</span>
           </div>
-        } @empty {
-          <div class="pl-box-empty">No boxes closed yet this shift</div>
-        }
+          @if (recentBoxes().length) {
+            <div class="dk-boxlist">
+              @for (row of recentBoxes(); track row.box._id ?? row.box.COMPLETED_AT) {
+                <div class="dk-box" [class.dk-box-short]="!row.box.IS_FULL" [class.dk-box-new]="row.fresh">
+                  <div class="dk-box-info">
+                    <div class="dk-box-top">
+                      <span class="dk-box-mc">{{ row.box.MACHINE_CODE || 'C' + row.box.CELL_NO }}</span>
+                      <span class="dk-box-title">{{ row.box.COMP_NAME || row.box.PART_NAME }}</span>
+                    </div>
+                    @if (row.box.COMP_NAME && row.box.COMP_NAME !== row.box.PART_NAME) {
+                      <div class="dk-box-no">{{ row.box.PART_NAME }}</div>
+                    }
+                    <div class="dk-box-meta">
+                      {{ row.box.COMPLETED_AT | date: 'h:mm a' }}{{ row.box.WORKER_NAME ? ' · ' + row.box.WORKER_NAME : '' }}
+                    </div>
+                  </div>
+                  <div class="dk-box-qty">
+                    <span class="dk-box-n">{{ row.box.DONE_QTY }}<small>/{{ row.box.PACKING_QTY }}</small></span>
+                    <span class="dk-box-s">{{ row.box.IS_FULL ? 'Full' : 'Short ' + row.box.SHORT_BY }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="dk-none">
+              <svg appIcon="box-open" class="dk-none-art"></svg>
+              <span>No boxes closed yet<br>this shift</span>
+            </div>
+          }
+        </div>
+
+        <!-- What the board has seen happen, newest first -->
+        <div class="dk-panel">
+          <div class="dk-panel-head">
+            <svg appIcon="list"></svg>
+            <span class="dk-panel-title">Recent events</span>
+            <span class="dk-panel-link">View all</span>
+          </div>
+          <div class="dk-events">
+            @for (e of events(); track e.code + e.at + e.text) {
+              <div class="dk-event" [attr.data-tone]="e.tone">
+                <i class="dk-event-dot"></i>
+                <span class="dk-event-t">{{ e.at | date: 'HH:mm' }}</span>
+                <span class="dk-event-mc">{{ e.code }}</span>
+                <span class="dk-event-x">{{ e.text }}</span>
+              </div>
+            } @empty {
+              <div class="dk-none dk-none-quiet">Nothing to report yet</div>
+            }
+          </div>
+        </div>
+      </aside>
+    </section>
+  } @else {
+    <!-- ══ The light board ══ -->
+
+    <!-- Header: which line, then the figures the floor looks up for -->
+    <header class="pl-head">
+      <div class="pl-id">
+        <div class="pl-brand">Inspection <span class="pl-dot-sep">&middot;</span> Packing</div>
+        <div class="pl-title-row">
+          <h1 class="pl-title">{{ line().name }}</h1>
+          @if (line().code !== '—') {
+            <span class="pl-code">{{ line().code }}</span>
+          }
+        </div>
       </div>
-    </aside>
-  </section>
+
+      <div class="pl-kpis">
+        <div class="pl-kpi">
+          <span class="pl-kpi-k">{{ line().shift.name }}</span>
+          <span class="pl-kpi-v pl-kpi-v-time">{{ line().shift.start }} &ndash; {{ line().shift.end }}</span>
+          @if (shiftClock(); as sc) {
+            <span class="pl-meter"><i [style.width.%]="sc.pct"></i></span>
+            <span class="pl-kpi-s">{{ sc.left }} left</span>
+          } @else {
+            <span class="pl-kpi-s">&nbsp;</span>
+          }
+        </div>
+
+        <div class="pl-kpi">
+          <span class="pl-kpi-k">Overall progress</span>
+          <span class="pl-kpi-v">{{ totals().packed | number }}<small> / {{ totals().target | number }}</small></span>
+          <span class="pl-meter"><i [style.width.%]="totals().bar"></i></span>
+          <span class="pl-kpi-s">{{ totals().pct }}% of parts packed</span>
+        </div>
+
+        <div class="pl-kpi">
+          <span class="pl-kpi-k">Boxes this shift</span>
+          <span class="pl-kpi-v">{{ boxTotals().count | number }}</span>
+          <span class="pl-kpi-s">{{ boxTotals().pieces | number }} pcs packed</span>
+        </div>
+
+        <div class="pl-kpi pl-kpi-attn" [class.pl-kpi-alert]="stalls().size">
+          <span class="pl-kpi-k">Attention</span>
+          <span class="pl-kpi-v">{{ stalls().size }}</span>
+          <span class="pl-kpi-s">{{ stalls().size ? 'no inspection 10+ min' : 'no machine stalled' }}</span>
+        </div>
+
+        <div class="pl-clock">
+          @if (now(); as t) {
+            <span class="pl-clock-v">{{ t | date: 'hh:mm:ss' }}<small>{{ t | date: 'a' }}</small></span>
+            <span class="pl-clock-s">{{ t | date: 'EEEE, d MMM' }}</span>
+          } @else {
+            <span class="pl-clock-v">--:--:--</span>
+            <span class="pl-clock-s">&nbsp;</span>
+          }
+        </div>
+
+        <div class="pl-status">
+          @for (chip of line().systems; track chip.label) {
+            <span class="pl-chip" [attr.data-tone]="chip.tone">
+              @if (chip.tone === 'ok') {
+                <i class="pl-chip-dot"></i>
+              }
+              {{ chip.label }}
+            </span>
+          }
+          <button type="button" class="pl-chip pl-chip-btn" (click)="openSettings()">Settings</button>
+          <button type="button" class="pl-chip pl-chip-btn pl-theme" aria-label="Dark theme" aria-pressed="false"
+                  (click)="toggleTheme()">
+            <i class="pl-switch"></i>Dark
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- The floor: the two anchors with their machines, and the boxes closed beside them -->
+    <section class="pl-floor">
+      @for (anchor of anchors(); track anchor.code) {
+        <div class="pl-anchor">
+          <div class="pl-anchor-head">
+            <span class="pl-anchor-name">{{ anchor.name }}</span>
+            <span class="pl-anchor-sub">{{ anchor.range }}</span>
+            <span class="pl-anchor-sum">
+              {{ anchor.packed }} / {{ anchor.target }}<b>{{ anchor.pct }}%</b>
+            </span>
+          </div>
+
+          @for (s of anchor.stations; track s.code) {
+            @let stall = stalls().get(s.code);
+            @let rate = pace().get(s.code);
+            @let last = lastPiece().get(s.code);
+            @let box = boxes().get(s.code);
+            @let bump = bumps().get(s.code);
+            <article class="pl-card" [attr.data-status]="s.status" [class.pl-stalled]="!!stall">
+              <!-- Which machine this is, as a spine down the side -->
+              <div class="pl-spine">
+                <span class="pl-mc">{{ s.code }}</span>
+                <span class="pl-cell">Cell {{ s.cellNo }}</span>
+              </div>
+
+              @switch (s.status) {
+                @case ('idle') {
+                  <div class="pl-main pl-main-quiet">
+                    <div class="pl-quiet">Idle</div>
+                    <div class="pl-quiet-sub">No product queued{{ s.machineName ? ' · ' + s.machineName : '' }}</div>
+                  </div>
+                }
+                @case ('completed') {
+                  <div class="pl-main pl-main-quiet">
+                    <div class="pl-quiet">Queue done</div>
+                    <div class="pl-quiet-sub">Every queued part is packed &mdash; waiting for the next product</div>
+                  </div>
+                }
+                @default {
+                  <!-- What is being packed -->
+                  <div class="pl-main">
+                    <div class="pl-meta">
+                      <span class="pl-pill"><i class="pl-pill-dot"></i>{{ s.label }}</span>
+                    </div>
+                    <!-- What the part is called, large and on one line, with its
+                         number beneath — the number once only, when there is no
+                         component name. -->
+                    @let name = s.partName || s.partNo;
+                    <div class="pl-name" [appFitLine]="name">{{ name }}</div>
+                    @if (s.partNo && s.partNo !== s.partName) {
+                      <div class="pl-partno">{{ s.partNo }}</div>
+                    }
+                  </div>
+
+                  <!-- Who it is for, and who is on it -->
+                  <div class="pl-stack pl-people">
+                    <div class="pl-fact">
+                      <span class="pl-fact-k">Customer</span>
+                      <span class="pl-fact-v">{{ s.customer || '—' }}</span>
+                    </div>
+                    <div class="pl-fact">
+                      <span class="pl-fact-k">Operator</span>
+                      <span class="pl-fact-v">{{ s.operator || '—' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- How it is going: when the last piece came, or a box in its
+                       place when there is something to say -->
+                  <div class="pl-stack pl-activity">
+                    @if (stall) {
+                      <!-- Running, but no new count for STALL_MS: the time since the last one -->
+                      <div class="pl-flag pl-stall">
+                        <span class="pl-flag-k">No inspection for</span>
+                        <span class="pl-flag-v pl-stall-v">{{ stall }}</span>
+                      </div>
+                    } @else if (justClosed().has(s.code) && box?.last) {
+                      <!-- The box that just closed, for a minute and a half -->
+                      <div class="pl-flag pl-closed">
+                        <span class="pl-flag-k">&#10003; Box closed</span>
+                        <span class="pl-flag-v">{{ box!.last!.DONE_QTY }} pcs</span>
+                      </div>
+                    } @else if (s.status === 'waiting') {
+                      <div class="pl-flag pl-waiting">
+                        <span class="pl-flag-k">Waiting for</span>
+                        <span class="pl-flag-v">First piece</span>
+                      </div>
+                    } @else {
+                      <div class="pl-fact">
+                        <span class="pl-fact-k">Last piece</span>
+                        <span class="pl-fact-v" [class.pl-fact-none]="!last">{{ last || '—' }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- The box as a dial: what is in it, and what is left -->
+                  <div class="pl-dial">
+                    <div class="pl-gauge">
+                      <svg class="pl-gauge-svg" viewBox="0 0 100 56" aria-hidden="true">
+                        <path class="pl-gauge-track" d="M 8 50 A 42 42 0 0 1 92 50" />
+                        <path class="pl-gauge-fill" d="M 8 50 A 42 42 0 0 1 92 50"
+                              [attr.stroke-dasharray]="gaugeArc" [attr.stroke-dashoffset]="s.gauge" />
+                      </svg>
+                      <!-- A rise the board saw pops the count and floats the rise;
+                           the two classes alternate on every rise, which is what
+                           restarts the animation without rebuilding anything. -->
+                      <div class="pl-gauge-read">
+                        <span class="pl-gauge-n" [class.pl-bump]="bump && !bump.odd"
+                              [class.pl-bump-alt]="bump?.odd">{{ s.packed }}</span>
+                        <span class="pl-gauge-t">of {{ s.target }}</span>
+                      </div>
+                      @if (bump) {
+                        <span class="pl-plus" [class.pl-plus-alt]="bump.odd">+{{ bump.by }}</span>
+                      }
+                    </div>
+                    <div class="pl-togo" [class.pl-togo-due]="s.nearFull"><b>{{ s.remaining }}</b> to go</div>
+                    @if (rate?.eta && !stall) {
+                      <div class="pl-eta">full &asymp; {{ rate!.eta | date: 'h:mm a' }}</div>
+                    }
+                  </div>
+                }
+              }
+
+              <!-- What goes in the next box, gliding across the card as on a station board -->
+              <div class="pl-strip" [class.pl-strip-next]="!!s.nextPartNo" [class.pl-strip-due]="s.nearFull">
+                @if (s.nextPartNo) {
+                  <span class="pl-tag">Next</span>
+                  <span class="pl-ticker">
+                    <span class="pl-ticker-run">
+                      <span class="pl-next-name">{{ s.nextPartName || s.nextPartNo }}</span>
+                      @if (s.nextPartNo !== s.nextPartName) {
+                        <span class="pl-next-no">{{ s.nextPartNo }}</span>
+                      }
+                      @if (s.nextQty) {
+                        <span class="pl-next-q"><span class="pl-next-q-k">Qty</span> {{ s.nextQty }}</span>
+                      }
+                      @if (s.nextStep) {
+                        <span class="pl-next-step">Part {{ s.nextStep }}/{{ s.partCount }}</span>
+                      }
+                    </span>
+                  </span>
+                } @else if (s.status === 'running' || s.status === 'waiting') {
+                  <span class="pl-next-none">Last part in the queue</span>
+                }
+                <span class="pl-strip-end">
+                  @if (s.queued) {
+                    <span class="pl-queued">+{{ s.queued }} queued</span>
+                  }
+                  @if (box) {
+                    <span class="pl-boxes">{{ box.count }} {{ box.count === 1 ? 'box' : 'boxes' }}</span>
+                  }
+                </span>
+              </div>
+            </article>
+          } @empty {
+            <div class="pl-empty">No machines placed on {{ anchor.name }}</div>
+          }
+        </div>
+      }
+
+      <!-- Down the right: the boxes closed this shift, and what the board has seen happen -->
+      <aside class="pl-rail">
+        <!-- The boxes the line has closed this shift, newest first -->
+        <div class="pl-panel">
+          <div class="pl-panel-head">
+            <span class="pl-panel-bar"></span>
+            <span class="pl-panel-title">Completed boxes</span>
+            <span class="pl-panel-note"><b>{{ boxTotals().count }}</b> &middot; {{ boxTotals().pieces | number }} pcs</span>
+          </div>
+          <div class="pl-boxlist">
+            @for (row of recentBoxes(); track row.box._id ?? row.box.COMPLETED_AT) {
+              <div class="pl-box" [class.pl-box-short]="!row.box.IS_FULL" [class.pl-box-new]="row.fresh">
+                <div class="pl-box-info">
+                  <!-- Named as on the cards: what the part is called, then its number -->
+                  <div class="pl-box-top">
+                    <span class="pl-box-mc">{{ row.box.MACHINE_CODE || 'C' + row.box.CELL_NO }}</span>
+                    <span class="pl-box-title">{{ row.box.COMP_NAME || row.box.PART_NAME }}</span>
+                  </div>
+                  @if (row.box.COMP_NAME && row.box.COMP_NAME !== row.box.PART_NAME) {
+                    <div class="pl-box-no">{{ row.box.PART_NAME }}</div>
+                  }
+                  <div class="pl-box-meta">
+                    {{ row.box.COMPLETED_AT | date: 'h:mm a' }}{{ row.box.WORKER_NAME ? ' · ' + row.box.WORKER_NAME : '' }}
+                  </div>
+                </div>
+                <!-- What went in the box, large: the figure the list is read for -->
+                <div class="pl-box-qty">
+                  <span class="pl-box-n">{{ row.box.DONE_QTY }}<small>/{{ row.box.PACKING_QTY }}</small></span>
+                  <span class="pl-box-s">{{ row.box.IS_FULL ? 'Full' : 'Short ' + row.box.SHORT_BY }}</span>
+                </div>
+              </div>
+            } @empty {
+              <div class="pl-box-empty">No boxes closed yet this shift</div>
+            }
+          </div>
+        </div>
+
+        <!-- What the board has seen happen, newest first, as on the dark board -->
+        <div class="pl-panel">
+          <div class="pl-panel-head">
+            <span class="pl-panel-bar pl-panel-bar-events"></span>
+            <span class="pl-panel-title">Recent events</span>
+          </div>
+          <div class="pl-events">
+            @for (e of events(); track e.code + e.at + e.text) {
+              <div class="pl-event" [attr.data-tone]="e.tone">
+                <i class="pl-event-dot"></i>
+                <span class="pl-event-t">{{ e.at | date: 'HH:mm' }}</span>
+                <span class="pl-event-mc">{{ e.code }}</span>
+                <span class="pl-event-x">{{ e.text }}</span>
+              </div>
+            } @empty {
+              <div class="pl-box-empty">Nothing to report yet</div>
+            }
+          </div>
+        </div>
+      </aside>
+    </section>
+  }
 
   <!-- Settings: which server feeds the board, and which line it shows -->
   @if (settingsOpen()) {

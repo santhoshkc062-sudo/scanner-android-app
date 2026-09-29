@@ -13,6 +13,7 @@ import {
 import { DatePipe, DecimalPipe } from '@angular/common';
 
 import { FitLine } from './fit-line';
+import { Icon } from './icon';
 import { PackingLine, Station, StationStatus, SystemChip } from './packing-line';
 import { NO_SHIFT, PartCompletion, toPackingLine } from './smes-data';
 import { BoardFeed, LINE_KEY, SERVER_KEY, normaliseServer } from './services/board-feed';
@@ -50,8 +51,18 @@ const TRAIL_MAX = 12;
 /** Boxes listed down the side — as many as its height holds. */
 const FEED_ROWS = 9;
 
+/** Events listed under them on the dark board. */
+const EVENT_ROWS = 8;
+
 /** Where the count marks are saved, so a reboot resumes the stall timers. */
 const MARKS_KEY = 'tvCountMarks';
+
+/** Where the TV keeps its theme, 'dark' or 'light'. index.html reads it too,
+ *  to paint the first frame dark. */
+const THEME_KEY = 'tvTheme';
+
+/** The class on <html> while the board is dark; index.html sets it at boot. */
+const DARK_CLASS = 'tv-dark';
 
 /** The box dial: a half circle of this radius, drawn by its dash offset. */
 const GAUGE_ARC = Math.PI * 42;
@@ -72,6 +83,16 @@ interface CountMark {
   watched?: boolean;
   /** Counts the board saw go up on this job, as [epoch ms, packed], oldest first. */
   trail?: [number, number][];
+}
+
+/** Something the board saw happen, for the dark board's list. */
+interface BoardEvent {
+  /** When it happened (epoch ms). */
+  at: number;
+  /** The machine it happened on. */
+  code: string;
+  text: string;
+  tone: 'alert' | 'wait' | 'done';
 }
 
 /** Whole-number percentage; 0 when there is no target to measure against. */
@@ -166,9 +187,9 @@ const EMPTY_LINE: PackingLine = {
  */
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, DecimalPipe, FitLine],
+  imports: [DatePipe, DecimalPipe, FitLine, Icon],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrls: ['./app.css', './app-dark.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown)': 'onKey($event)' },
 })
@@ -192,6 +213,10 @@ export class AppComponent {
   readonly server = signal('');
   /** The line this TV is pinned to; empty means "the first line". */
   readonly pinnedLine = signal('');
+
+  /** The dark board rather than the light one. Light until the browser takes
+   *  over and reads the saved theme, as the pre-rendered page is light. */
+  readonly dark = signal(false);
 
   readonly settingsOpen = signal(false);
   /** Settings form drafts — applied only on Save. */
@@ -488,6 +513,38 @@ export class AppComponent {
     });
   });
 
+  /** What the board has seen happen, newest first: machines that stopped
+   *  counting (when they crossed STALL_MS), machines waiting for their first
+   *  piece (since the board saw the job arrive), and the boxes closed. Built
+   *  from what is true now, so an alarm leaves the list once its machine
+   *  counts again. */
+  readonly events = computed(() => {
+    const marks = this.marks();
+    const stalls = this.stalls();
+    const line = this.line();
+    const out: BoardEvent[] = [];
+    for (const anchor of line.anchors) {
+      for (const s of anchor.stations) {
+        const at = marks[markKey(line, s)]?.at;
+        if (at == null) continue;
+        if (stalls.has(s.code)) {
+          out.push({ at: at + STALL_MS, code: s.code, text: `No inspection ${STALL_MS / 60_000}+ min`, tone: 'alert' });
+        } else if (s.status === 'waiting') {
+          out.push({ at, code: s.code, text: 'Waiting for first piece', tone: 'wait' });
+        }
+      }
+    }
+    for (const r of this.feed.completions() || []) {
+      out.push({
+        at: Date.parse(r.COMPLETED_AT),
+        code: boxOwner(r),
+        text: r.IS_FULL ? `Box closed · ${r.DONE_QTY} pcs` : `Short box · ${r.DONE_QTY}/${r.PACKING_QTY}`,
+        tone: r.IS_FULL ? 'done' : 'wait',
+      });
+    }
+    return out.sort((a, b) => b.at - a.at).slice(0, EVENT_ROWS);
+  });
+
   constructor() {
     const destroyRef = inject(DestroyRef);
 
@@ -517,11 +574,27 @@ export class AppComponent {
       if (params.get('server')) writeStore(SERVER_KEY, server);
       if (params.get('line')) writeStore(LINE_KEY, lineCode);
 
+      this.setDark(readStore(THEME_KEY) === 'dark');
       this.server.set(server);
       this.pinnedLine.set(lineCode);
       if (server) this.feed.start(server);
       else this.openSettings();
     });
+  }
+
+  // ── Theme ───────────────────────────────────────────────────────────────────
+
+  /** The on/off switch: saved, so the TV comes back in the theme it was left in. */
+  toggleTheme(): void {
+    this.setDark(!this.dark());
+    writeStore(THEME_KEY, this.dark() ? 'dark' : 'light');
+  }
+
+  private setDark(dark: boolean): void {
+    this.dark.set(dark);
+    // Paints the page behind the board to match, and lets the light board
+    // show again: index.html keeps it hidden while a dark TV boots.
+    document.documentElement.classList.toggle(DARK_CLASS, dark);
   }
 
   // ── Settings ────────────────────────────────────────────────────────────────

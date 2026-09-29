@@ -263,10 +263,18 @@
   color: var(--muted);
 }
 
+/* The connection chips across the top; Settings and the theme switch side by
+   side beneath them, so the header keeps its height. */
 .pl-status {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column-gap: calc(6 * var(--u));
   grid-row-gap: calc(6 * var(--u));
   justify-items: stretch;
+}
+
+.pl-status > .pl-chip:not(.pl-chip-btn) {
+  grid-column: 1 / 3;
 }
 
 .pl-chip {
@@ -329,6 +337,28 @@
   outline: none;
   background: var(--navy);
   color: #fff;
+}
+
+/* The dark theme's on/off switch, off here; app-dark.css draws it on. */
+.pl-switch {
+  position: relative;
+  flex: none;
+  width: calc(22 * var(--u));
+  height: calc(12 * var(--u));
+  margin-right: calc(7 * var(--u));
+  border-radius: 99px;
+  background: #c3ccd8;
+}
+
+.pl-switch::after {
+  content: '';
+  position: absolute;
+  top: calc(2 * var(--u));
+  left: calc(2 * var(--u));
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  border-radius: 50%;
+  background: #fff;
 }
 
 /* ── the floor: two anchors and the boxes beside them ─────────────────────── */
@@ -969,9 +999,9 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  min-height: calc(32 * var(--u));
+  min-height: calc(46 * var(--u));
   overflow: hidden;
-  padding: calc(5 * var(--u)) calc(12 * var(--u)) calc(5 * var(--u)) calc(14 * var(--u));
+  padding: calc(7 * var(--u)) calc(12 * var(--u)) calc(7 * var(--u)) calc(14 * var(--u));
   background: #f7f9fc;
   border-top: 1px solid var(--line-soft);
 }
@@ -989,23 +1019,13 @@
   border-top-color: var(--amber-bd);
 }
 
-.pl-next {
-  flex: 0 1 auto;
-  display: flex;
-  align-items: baseline;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 .pl-tag {
   flex: none;
-  align-self: center;
-  margin-right: calc(9 * var(--u));
-  padding: calc(4 * var(--u)) calc(8 * var(--u));
+  margin-right: calc(14 * var(--u));
+  padding: calc(6 * var(--u)) calc(12 * var(--u));
   border-radius: calc(4 * var(--u));
   background: var(--teal);
-  font-size: calc(10 * var(--u));
+  font-size: calc(13 * var(--u));
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -1017,31 +1037,68 @@
   background: var(--amber);
 }
 
-/* Named as on the card: what it is called first, its number after. */
-.pl-next-name {
+/* The next part glides across the strip from right to left and round again,
+   as on a station board, to catch the eye of whoever is at the machine. The
+   run starts just off the right edge (its padding is the strip's width) and
+   ends just off the left, and the edges fade. The dark board runs it too. */
+.pl-ticker {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.pl-ticker-run {
+  display: inline-block;
+  padding-left: 100%;
+  animation: pl-ticker 14s linear infinite;
+  will-change: transform;
+}
+
+@keyframes pl-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* Named as on the card: what it is called first, its number after. */
+.pl-next-name {
   font-family: var(--cond);
-  font-size: calc(16 * var(--u));
+  font-size: calc(22 * var(--u));
   font-weight: 700;
-  text-overflow: ellipsis;
   color: var(--navy);
 }
 
+.pl-next-no,
+.pl-next-q,
+.pl-next-step {
+  margin-left: calc(14 * var(--u));
+}
+
 .pl-next-no {
-  flex: none;
-  margin-left: calc(8 * var(--u));
-  font-size: calc(12.5 * var(--u));
+  font-size: calc(16.5 * var(--u));
   font-weight: 600;
   color: var(--text-2);
 }
 
+/* How many go in it: "Qty", small, then the figure. */
 .pl-next-q {
-  flex: none;
-  margin-left: calc(8 * var(--u));
-  font-size: calc(12 * var(--u));
+  font-size: calc(17 * var(--u));
   font-weight: 700;
   color: var(--teal-dk);
+}
+
+.pl-next-q-k {
+  font-size: calc(11.5 * var(--u));
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .pl-strip-due .pl-next-q {
@@ -1050,19 +1107,16 @@
 
 /* Where the next part sits in this product's run. */
 .pl-next-step {
-  flex: none;
-  align-self: center;
-  margin-left: calc(10 * var(--u));
-  font-size: calc(9.5 * var(--u));
+  font-size: calc(12 * var(--u));
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  white-space: nowrap;
   color: var(--muted);
 }
 
+/* Nothing after this box: said quietly, and still. */
 .pl-next-none {
-  font-size: calc(11.5 * var(--u));
+  font-size: calc(14 * var(--u));
   font-style: italic;
   white-space: nowrap;
   color: var(--muted);
@@ -1077,7 +1131,7 @@
 }
 
 .pl-queued {
-  font-size: calc(11 * var(--u));
+  font-size: calc(13 * var(--u));
   font-weight: 600;
   white-space: nowrap;
   color: var(--muted);
@@ -1085,10 +1139,10 @@
 
 .pl-boxes {
   margin-left: calc(10 * var(--u));
-  padding: calc(3 * var(--u)) calc(7 * var(--u));
+  padding: calc(5 * var(--u)) calc(9 * var(--u));
   border-radius: 99px;
   background: var(--teal-lt);
-  font-size: calc(9.5 * var(--u));
+  font-size: calc(11.5 * var(--u));
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.08em;
@@ -1097,12 +1151,21 @@
   color: var(--teal-dk);
 }
 
-/* ── completed boxes ──────────────────────────────────────────────────────── */
+/* ── down the right: completed boxes, and recent events ───────────────────── */
 
+/* The events panel is as tall as its EVENT_ROWS (app.ts) and the boxes take
+   the rest, fixed either way so neither list jumps as the other fills. */
 .pl-rail {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) calc(312 * var(--u));
+  grid-row-gap: calc(12 * var(--u));
   min-width: 0;
+  min-height: 0;
+}
+
+.pl-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
   background: var(--card);
@@ -1128,6 +1191,10 @@
   background: var(--teal);
 }
 
+.pl-panel-bar-events {
+  background: var(--blue);
+}
+
 .pl-panel-title {
   font-size: calc(13 * var(--u));
   font-weight: 700;
@@ -1148,20 +1215,32 @@
   color: var(--navy);
 }
 
-/* One card per box, newest on top; the ones that do not fit fall off the end. */
-.pl-boxlist {
-  display: grid;
-  grid-auto-rows: max-content;
-  grid-row-gap: calc(7 * var(--u));
-  align-content: start;
+/* One card per box, newest on top, as many as the panel holds and never half
+   of one: a card that does not fit wraps into a second column, off to the
+   right and out of sight. The sides are inset with a clear border rather than
+   padding, as the clip is at the padding's edge. */
+.pl-boxlist,
+.pl-events {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
   min-height: 0;
   overflow: hidden;
-  padding: calc(10 * var(--u));
+}
+
+.pl-boxlist {
+  padding: calc(10 * var(--u)) 0;
+  border-right: calc(10 * var(--u)) solid transparent;
+  border-left: calc(10 * var(--u)) solid transparent;
 }
 
 /* What was packed on the left; how many, large, on the right. */
 .pl-box {
+  box-sizing: border-box;
   display: grid;
+  flex: none;
+  width: 100%;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-column-gap: calc(10 * var(--u));
   align-items: center;
@@ -1170,6 +1249,10 @@
   border-radius: calc(8 * var(--u));
   background: var(--card);
   box-shadow: inset calc(3 * var(--u)) 0 0 var(--teal);
+}
+
+.pl-box + .pl-box {
+  margin-top: calc(7 * var(--u));
 }
 
 .pl-box-short {
@@ -1286,10 +1369,59 @@
 }
 
 .pl-box-empty {
+  box-sizing: border-box;
+  width: 100%;
   padding: calc(24 * var(--u)) calc(10 * var(--u));
   text-align: center;
   font-size: calc(12 * var(--u));
   color: var(--muted);
+}
+
+/* One line per event: its dot, when, the machine, and what happened. */
+.pl-event {
+  box-sizing: border-box;
+  display: grid;
+  flex: none;
+  grid-template-columns: calc(8 * var(--u)) auto auto minmax(0, 1fr);
+  grid-column-gap: calc(9 * var(--u));
+  align-items: center;
+  width: 100%;
+  padding: calc(9 * var(--u)) calc(14 * var(--u));
+  border-bottom: 1px solid var(--line-soft);
+  font-size: calc(12 * var(--u));
+  white-space: nowrap;
+}
+
+/* Red for an alarm, amber for a wait or a short box, green for a full one. */
+.pl-event-dot {
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.pl-event[data-tone='wait'] .pl-event-dot {
+  background: var(--amber);
+}
+
+.pl-event[data-tone='done'] .pl-event-dot {
+  background: var(--teal);
+}
+
+.pl-event-t {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.pl-event-mc {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.pl-event-x {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-2);
 }
 
 @keyframes pl-blink {
@@ -1313,6 +1445,16 @@
   /* Still said, just not moved. */
   .pl-plus {
     opacity: 1;
+    animation: none;
+  }
+
+  .pl-ticker {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .pl-ticker-run {
+    padding-left: 0;
     animation: none;
   }
 }

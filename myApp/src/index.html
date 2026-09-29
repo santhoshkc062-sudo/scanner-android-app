@@ -23,6 +23,12 @@
   <!-- The first paint is the board's own ground. styles.css is a round trip
        away, and a flash of another colour before the board reads as a fault. -->
   <style>html,body{margin:0;height:100%;background:#eef1f6}</style>
+
+  <!-- A TV left in the dark theme boots dark. The pre-rendered board is the
+       light one, so it stays hidden until the app has switched over; app.ts
+       keeps the class in step with the theme from then on. -->
+  <style>html.tv-dark,html.tv-dark body{background:#0a1524!important}html.tv-dark .pl:not(.dk){visibility:hidden}</style>
+  <script>try{if(localStorage.getItem('tvTheme')==='dark')document.documentElement.className+=' tv-dark'}catch(e){}</script>
 </head>
 <body style="background:#eef1f6">
   <app-root></app-root>

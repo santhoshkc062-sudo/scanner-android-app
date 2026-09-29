@@ -201,6 +201,21 @@ describe('machine card', () => {
     expect(fiveOfTen.nearFull).toBe(false);
   });
 
+  it('runs the next part across its strip, and says still when there is none', async () => {
+    land(
+      snapshot({
+        'M-01': [product('Pump', [part('P-1', 3, 56, 'Housing'), part('P-2', 0, 30, 'Cover')])],
+        'M-02': [product('Pump', [part('P-9', 3)])],
+      }),
+      T0,
+    );
+    await fixture.whenStable();
+
+    const run = cardOf('M-01').querySelectorAll('.pl-ticker-run > *');
+    expect(Array.from(run, (e) => e.textContent?.trim())).toEqual(['Cover', 'P-2', 'Qty 30', 'Part 2/2']);
+    expect(cardOf('M-02').querySelector('.pl-ticker')).toBeNull();
+    expect(cardOf('M-02').querySelector('.pl-next-none')?.textContent).toBe('Last part in the queue');
+  });
 });
 
 describe('component name', () => {
@@ -432,5 +447,101 @@ describe('boxes this shift', () => {
 
     expect(app.shiftFrom()).toBe(new Date(2026, 8, 25, 22, 0).toISOString());
     expect(app.shiftClock()).toEqual({ pct: 56, left: '3h 30m' });
+  });
+});
+
+describe('dark theme', () => {
+  function darkCardOf(code: string): Element {
+    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.dk-card')).find(
+      (c) => c.querySelector('.dk-mc')?.textContent === code,
+    )!;
+  }
+
+  /** A board switched on with the dark theme saved, as after a reboot. */
+  function bootDark(): void {
+    TestBed.resetTestingModule();
+    localStorage.setItem('tvTheme', 'dark');
+    boot();
+  }
+
+  afterEach(() => document.documentElement.classList.remove('tv-dark'));
+
+  it('switches between the light and the dark board on its on/off button, and saves the choice', async () => {
+    land(pair(4), T0);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.dk-card')).toBeNull();
+
+    (el.querySelector('.pl-theme') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(el.querySelectorAll('.dk-card').length).toBe(8);
+    expect(el.querySelector('.pl-card')).toBeNull();
+    expect(localStorage.getItem('tvTheme')).toBe('dark');
+    expect(document.documentElement.classList).toContain('tv-dark');
+
+    (el.querySelector('.dk-theme') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(el.querySelectorAll('.pl-card').length).toBe(8);
+    expect(localStorage.getItem('tvTheme')).toBe('light');
+    expect(document.documentElement.classList).not.toContain('tv-dark');
+  });
+
+  it('comes back in the theme it was left in', async () => {
+    bootDark();
+    land(pair(4), T0);
+    await fixture.whenStable();
+
+    expect(app.dark()).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.dk-card').length).toBe(8);
+  });
+
+  it('flags the same machines as the light board: the stalled one red with its timer', async () => {
+    bootDark();
+    land(pair(4), T0);
+    await fixture.whenStable();
+    at(T0 + 10 * MIN);
+    fixture.detectChanges();
+
+    expect(darkCardOf('M-01').classList).toContain('dk-stalled');
+    expect(darkCardOf('M-01').querySelector('.dk-stall .dk-flag-v')?.textContent).toBe('10:00');
+    expect(darkCardOf('M-02').classList).not.toContain('dk-stalled');
+    expect(darkCardOf('M-02').querySelector('.dk-waiting')).not.toBeNull();
+  });
+
+  it('runs the next part across the strip, as the light board does', async () => {
+    bootDark();
+    land(snapshot({ 'M-01': [product('Pump', [part('P-1', 3, 56, 'Housing'), part('P-2', 0, 30, 'Cover')])] }), T0);
+    await fixture.whenStable();
+
+    const run = darkCardOf('M-01').querySelectorAll('.pl-ticker-run > *');
+    expect(Array.from(run, (e) => e.textContent?.trim())).toEqual(['Cover', 'P-2', 'Qty 30', 'Part 2/2']);
+  });
+});
+
+describe('recent events', () => {
+  it('lists what it saw happen, newest first: stalls, first pieces awaited, and boxes closed', () => {
+    land(pair(4), T0);
+    app.feed.completions.set([box('M-03', T0 + 2 * MIN, 'b2', 8, 10), box('M-07', T0 - 30 * MIN, 'b1')]);
+    at(T0 + 15 * MIN);
+
+    expect(app.events().map((e) => [e.at, e.code, e.text, e.tone])).toEqual([
+      [T0 + 10 * MIN, 'M-01', 'No inspection 10+ min', 'alert'],
+      [T0 + 2 * MIN, 'M-03', 'Short box · 8/10', 'wait'],
+      [T0, 'M-02', 'Waiting for first piece', 'wait'],
+      [T0 - 30 * MIN, 'M-07', 'Box closed · 56 pcs', 'done'],
+    ]);
+  });
+
+  it('shows them on the light board as well as the dark', async () => {
+    land(pair(4), T0);
+    await fixture.whenStable();
+    at(T0 + 15 * MIN);
+    fixture.detectChanges();
+
+    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('.pl-event');
+    expect(Array.from(rows, (r) => [r.getAttribute('data-tone'), r.querySelector('.pl-event-mc')?.textContent])).toEqual([
+      ['alert', 'M-01'],
+      ['wait', 'M-02'],
+    ]);
   });
 });

@@ -48,6 +48,11 @@ const BUMP_MS = 2_500;
 const PACE_WINDOW_MS = 30 * 60_000;
 const TRAIL_MAX = 12;
 
+/** How late the next piece may be, by the box's plan, before the card says the
+ *  box is behind: a minute, or one piece's cycle when that is longer. Less is
+ *  only the gap between one count and the next. */
+const PLAN_GRACE_MS = 60_000;
+
 /** Boxes listed down the side — as many as its height holds. */
 const FEED_ROWS = 9;
 
@@ -83,9 +88,27 @@ interface CountMark {
   watched?: boolean;
   /** Counts the board saw go up on this job, as [epoch ms, packed], oldest first. */
   trail?: [number, number][];
+  /** The first pieces the board saw in the box now in hand — when, and how
+   *  many — which the box's plan counts from. Mostly its first piece; more
+   *  when several landed in one fetch, or the box was under way when the board
+   *  first looked. Absent while the box is empty. */
+  first?: { box: string; at: number; n: number };
 }
 
-/** Something the board saw happen, for the dark board's list. */
+/** Where a counting box stands against its plan: its part's cycle time for
+ *  every piece still to go after the first. */
+interface BoxPlan {
+  /** When the box should be full (epoch ms). */
+  due: number;
+  /** Behind the plan by more than PLAN_GRACE_MS. */
+  behind: boolean;
+  /** Behind, with the due time a minute or more gone. */
+  overdue: boolean;
+  /** What the card says under the time: On plan, 6 pcs behind, Overdue 5 min. */
+  note: string;
+}
+
+/** Something the board saw happen, for the Recent events list. */
 interface BoardEvent {
   /** When it happened (epoch ms). */
   at: number;
@@ -182,8 +205,9 @@ const EMPTY_LINE: PackingLine = {
  * bars and the cards can never disagree with one another.
  *
  * Beside that it keeps what only the board can know — when it last saw each
- * count move, and so the pace and the stall timers — and lists the boxes the
- * line has closed this shift.
+ * count move, and so the pace and the stall timers, and when each box's first
+ * piece came, which with the part's cycle time plans the box — and lists the
+ * boxes the line has closed this shift.
  */
 @Component({
   selector: 'app-root',
@@ -342,8 +366,16 @@ export class AppComponent {
           const job = jobKey(s);
           // A mark from the future means the clock was set back; start again.
           const old = prev[key] && prev[key].at <= at ? prev[key] : undefined;
+          // Where the box's plan counts from: kept while the box is the same
+          // one, dropped once it empties, taken afresh when a new one starts.
+          const kept =
+            old?.job === job && old.first?.box === s.boxId && old.first.at <= at ? old.first : undefined;
+          const first = s.packed > 0 ? (kept ?? { box: s.boxId, at, n: s.packed }) : undefined;
           if (old && old.job === job && old.packed === s.packed) {
-            next[key] = old;
+            // Nothing moved. A box that was already under way when the board
+            // first looked only gains where its plan counts from.
+            next[key] = old.first === first ? old : { ...old, first };
+            if (next[key] !== old) moved = true;
             continue;
           }
           moved = true;
@@ -352,11 +384,11 @@ export class AppComponent {
             const trail: [number, number][] =
               s.packed > old.packed ? [...(old.trail || []), [at, s.packed] as [number, number]].slice(-TRAIL_MAX) : [];
             const rises = (old.rises || 0) + (s.packed > old.packed ? 1 : 0);
-            next[key] = { job, packed: s.packed, from: old.packed, at, watched: true, trail, rises };
+            next[key] = { job, packed: s.packed, from: old.packed, at, watched: true, trail, rises, first };
           } else {
             // A new job the board saw arrive; with no mark at all this is only
             // the board's first look.
-            next[key] = { job, packed: s.packed, at, watched: !!old, trail: [] };
+            next[key] = { job, packed: s.packed, at, watched: !!old, trail: [], first };
           }
         }
       }
@@ -449,6 +481,45 @@ export class AppComponent {
     return out;
   });
 
+  /** Each counting box's plan, by station code, for a part with a cycle time:
+   *  from the first pieces the board saw in it, one cycle for every piece still
+   *  to go — so when it should be full, and whether the count is keeping up.
+   *  Rebuilt every second, like the stall timers. */
+  readonly plans = computed(() => {
+    const marks = this.marks();
+    const now = this.now()?.getTime();
+    const out = new Map<string, BoxPlan>();
+    // With the server out of reach the counts on screen are stale, and a box
+    // that is keeping up would be flagged as falling behind.
+    if (!now || this.feed.fetchError()) return out;
+    const line = this.line();
+    for (const anchor of line.anchors) {
+      for (const s of anchor.stations) {
+        const first = marks[markKey(line, s)]?.first;
+        if (s.status !== 'running' || !s.cycleSec || !first) continue;
+        const cycle = s.cycleSec * 1000;
+        const due = first.at + (s.target - first.n) * cycle;
+        const expected = Math.min(s.target, first.n + Math.floor(Math.max(0, now - first.at) / cycle));
+        // How late the next piece is, by the plan.
+        const lag = now - (first.at + (s.packed + 1 - first.n) * cycle);
+        const behind = lag > Math.max(PLAN_GRACE_MS, cycle);
+        const overMins = Math.floor((now - due) / 60_000);
+        const overdue = behind && overMins >= 1;
+        out.set(s.code, {
+          due,
+          behind,
+          overdue,
+          note: overdue
+            ? `Overdue ${overMins < 60 ? `${overMins} min` : span(overMins)}`
+            : behind
+              ? `${expected - s.packed} pcs behind`
+              : 'On plan',
+        });
+      }
+    }
+    return out;
+  });
+
   /** Boxes each machine has closed this shift, with the latest. */
   readonly boxes = computed(() => {
     const out = new Map<string, { count: number; pieces: number; last?: PartCompletion }>();
@@ -514,21 +585,26 @@ export class AppComponent {
   });
 
   /** What the board has seen happen, newest first: machines that stopped
-   *  counting (when they crossed STALL_MS), machines waiting for their first
-   *  piece (since the board saw the job arrive), and the boxes closed. Built
-   *  from what is true now, so an alarm leaves the list once its machine
-   *  counts again. */
+   *  counting (when they crossed STALL_MS), boxes past their due time and
+   *  still not full (from when they were due), machines waiting for their
+   *  first piece (since the board saw the job arrive), and the boxes closed.
+   *  Built from what is true now, so an alarm leaves the list once its machine
+   *  counts again, and an overdue box once it closes. */
   readonly events = computed(() => {
     const marks = this.marks();
     const stalls = this.stalls();
+    const plans = this.plans();
     const line = this.line();
     const out: BoardEvent[] = [];
     for (const anchor of line.anchors) {
       for (const s of anchor.stations) {
         const at = marks[markKey(line, s)]?.at;
         if (at == null) continue;
+        const plan = plans.get(s.code);
         if (stalls.has(s.code)) {
           out.push({ at: at + STALL_MS, code: s.code, text: `No inspection ${STALL_MS / 60_000}+ min`, tone: 'alert' });
+        } else if (plan?.overdue) {
+          out.push({ at: plan.due, code: s.code, text: `Box overdue · ${s.packed}/${s.target}`, tone: 'wait' });
         } else if (s.status === 'waiting') {
           out.push({ at, code: s.code, text: 'Waiting for first piece', tone: 'wait' });
         }

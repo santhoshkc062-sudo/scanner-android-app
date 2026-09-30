@@ -107,7 +107,9 @@
             @let last = lastPiece().get(s.code);
             @let box = boxes().get(s.code);
             @let bump = bumps().get(s.code);
-            <article class="dk-card" [attr.data-status]="s.status" [class.dk-stalled]="!!stall">
+            @let plan = plans().get(s.code);
+            <article class="dk-card" [attr.data-status]="s.status" [class.dk-stalled]="!!stall"
+                     [class.dk-behind]="!!plan?.behind && !stall">
               <div class="dk-spine">
                 <span class="dk-mc">{{ s.code }}</span>
                 <span class="dk-cell">Cell {{ s.cellNo }}</span>
@@ -179,6 +181,14 @@
                         <span class="dk-fact-k">Last piece</span>
                         <span class="dk-fact-v" [class.dk-fact-none]="!last">{{ last || '—' }}</span>
                       </div>
+                      @if (plan) {
+                        <!-- The box's plan at the part's cycle time, as on the light board -->
+                        <div class="dk-fact dk-plan" [class.dk-plan-behind]="plan.behind">
+                          <span class="dk-fact-k">Box due</span>
+                          <span class="dk-fact-v">{{ plan.due | date: 'h:mm a' }}</span>
+                          <span class="dk-plan-note">{{ plan.note }}</span>
+                        </div>
+                      }
                     }
                   </div>
 
@@ -394,7 +404,9 @@
             @let last = lastPiece().get(s.code);
             @let box = boxes().get(s.code);
             @let bump = bumps().get(s.code);
-            <article class="pl-card" [attr.data-status]="s.status" [class.pl-stalled]="!!stall">
+            @let plan = plans().get(s.code);
+            <article class="pl-card" [attr.data-status]="s.status" [class.pl-stalled]="!!stall"
+                     [class.pl-behind]="!!plan?.behind && !stall">
               <!-- Which machine this is, as a spine down the side -->
               <div class="pl-spine">
                 <span class="pl-mc">{{ s.code }}</span>
@@ -467,6 +479,16 @@
                         <span class="pl-fact-k">Last piece</span>
                         <span class="pl-fact-v" [class.pl-fact-none]="!last">{{ last || '—' }}</span>
                       </div>
+                      @if (plan) {
+                        <!-- The box's plan at the part's cycle time, counted from its
+                             first piece: when it should be full, and whether the count
+                             is keeping up. Amber, frame and all, once it is not. -->
+                        <div class="pl-fact pl-plan" [class.pl-plan-behind]="plan.behind">
+                          <span class="pl-fact-k">Box due</span>
+                          <span class="pl-fact-v">{{ plan.due | date: 'h:mm a' }}</span>
+                          <span class="pl-plan-note">{{ plan.note }}</span>
+                        </div>
+                      }
                     }
                   </div>
 

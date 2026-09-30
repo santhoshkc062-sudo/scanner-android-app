@@ -30,6 +30,12 @@ export interface Station {
   /** Pieces in the box, and the box quantity. */
   packed: number;
   target: number;
+  /** How long one piece of the part takes, in seconds, off the product master;
+   *  0 when it has no cycle time. With the box quantity it plans the box. */
+  cycleSec: number;
+  /** Which box this is — the queue entry and the part — so the next box of the
+   *  same part, queued again, gets a plan of its own. Empty with no part. */
+  boxId: string;
   /** The part packed once this box fills — the product's next part, else the
    *  first part of the product queued behind it — and its box quantity. Empty
    *  when nothing is queued after this box. */

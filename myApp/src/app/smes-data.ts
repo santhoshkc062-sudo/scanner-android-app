@@ -3,8 +3,8 @@
  * PackingLine.
  *
  * The shapes mirror main-server/src/ts-models/smes (line, anchor_mapping,
- * smes_shift and part_completion .interface.ts), trimmed to the fields used
- * here, and the queue rules mirror
+ * smes_shift, part_completion and product_packing .interface.ts), trimmed to
+ * the fields used here, and the queue rules mirror
  * main-ui/src/app/shared/product-queue.ts. This app is built on its own and
  * cannot import either, so change them together.
  */
@@ -36,6 +36,11 @@ export interface QueuedPart {
 }
 
 export interface QueuedProduct {
+  /** The queue entry's own id. The same product queued twice is two runs, so
+   *  this is what tells a box from the next box of the same part. */
+  _id?: string;
+  /** The product in the master, where its parts' cycle times are read. */
+  PRODUCT_ID?: string;
   PRODUCT_NAME?: string;
   CUSTOMER_NAME?: string;
   WORKER_NO: string;
@@ -61,11 +66,28 @@ export interface SmesShift {
   order?: number;
 }
 
+/** A part as the product master holds it, trimmed to its cycle time. */
+export interface ProductPart {
+  PART_NAME: string;
+  COMP_NAME?: string;
+  /** Seconds one piece takes; null or absent while nobody has set it. */
+  CYCLE_TIME_SEC?: number | null;
+}
+
+/** A product in the master. Read for its parts' cycle times, which the queue
+ *  does not copy — and read live, so a corrected time applies to the box
+ *  already running, as a corrected component name does. */
+export interface ProductPacking {
+  _id?: string;
+  PARTS?: ProductPart[];
+}
+
 /** Everything one refresh fetches. */
 export interface BoardSnapshot {
   lines: SmesLine[];
   boards: AnchorMapping[];
   shifts: SmesShift[];
+  products: ProductPacking[];
 }
 
 /** One box closed, as the server records it the moment a part fills. */
@@ -115,6 +137,20 @@ function partLabel(part: QueuedPart | undefined): string {
   return (part?.COMP_NAME || '').trim() || (part?.PART_NAME || '').trim();
 }
 
+/** Seconds a piece of this part takes, off the product master; 0 when it has
+ *  no cycle time there. Matched as main-ui's isSamePart (shared/part-label.ts):
+ *  by part number, else by component name — a part queued before parts had
+ *  numbers carries its component name in the number field. */
+function cycleOf(products: ProductPacking[], productId: string | undefined, part: QueuedPart | undefined): number {
+  const ref = (part?.PART_NAME || '').trim();
+  if (!productId || !ref) return 0;
+  const parts = products.find((p) => p._id === productId)?.PARTS || [];
+  const match =
+    parts.find((p) => (p.PART_NAME || '').trim() === ref) || parts.find((p) => (p.COMP_NAME || '').trim() === ref);
+  const sec = Number(match?.CYCLE_TIME_SEC);
+  return sec > 0 ? sec : 0;
+}
+
 // ── Shift ───────────────────────────────────────────────────────────────────
 
 /** Minutes past midnight. The shift master stores "08:00:00 AM"; a plain
@@ -148,7 +184,7 @@ function currentShift(shifts: SmesShift[], now: Date): SmesShift | undefined {
 
 // ── Mapping ─────────────────────────────────────────────────────────────────
 
-function stationFor(machine: SmesMachine, cell: AnchorCell | undefined): Station {
+function stationFor(machine: SmesMachine, cell: AnchorCell | undefined, products: ProductPacking[]): Station {
   const pending = pendingProducts(cell);
   const now = pending[0];
   const parts = now?.PARTS || [];
@@ -180,6 +216,8 @@ function stationFor(machine: SmesMachine, cell: AnchorCell | undefined): Station
     operator: now?.WORKER_NAME || now?.WORKER_NO || '',
     packed: part?.DONE_QTY || 0,
     target: part?.PACKING_QTY || 0,
+    cycleSec: cycleOf(products, now?.PRODUCT_ID, part),
+    boxId: part ? `${now?._id || ''}|${part.PART_NAME}` : '',
     nextPartNo: nextPart?.PART_NAME || '',
     nextPartName: partLabel(nextPart),
     nextQty: nextPart?.PACKING_QTY || 0,
@@ -208,7 +246,7 @@ export function toPackingLine(
     const stations = (line?.MACHINES || [])
       .filter((m) => Number(m.ANCHOR_NO) === anchorNo && m.CELL_NO != null)
       .sort((a, b) => (a.CELL_NO || 0) - (b.CELL_NO || 0))
-      .map((m) => stationFor(m, cells.find((c) => Number(c.CELL_NO) === Number(m.CELL_NO))));
+      .map((m) => stationFor(m, cells.find((c) => Number(c.CELL_NO) === Number(m.CELL_NO)), snap.products || []));
     return { code: ANCHOR_LETTER[anchorNo], name: `Anchor ${anchorNo}`, stations };
   });
 

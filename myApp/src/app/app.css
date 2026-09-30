@@ -525,6 +525,17 @@
     0 0 calc(14 * var(--u)) rgba(0, 0, 0, 0.18);
 }
 
+/* Counting, but behind its box's plan (app.ts, PLAN_GRACE_MS): the frame turns
+   amber — green on plan, amber behind it, red stopped. Must stay above the
+   stall rule, which takes over when the machine stops altogether. */
+.pl-card.pl-behind {
+  border-color: var(--amber);
+  background: #fffbf3;
+  box-shadow:
+    0 0 0 1px var(--amber),
+    0 0 calc(14 * var(--u)) rgba(217, 144, 15, 0.26);
+}
+
 /* Running, but no new count for STALL_MS (app.ts): the frame turns red. The
    pill and the dial stay in the running colour, because the job is still on
    the machine. It has only stopped counting. */
@@ -730,6 +741,30 @@
 /* Not known yet: a dash, kept quiet. */
 .pl-fact-none {
   color: #b9c4d4;
+}
+
+/* The box's plan: when it should be full at the part's cycle time, over a
+   note on how the count stands — green while it keeps up, amber once not. */
+.pl-plan-note {
+  padding: calc(3 * var(--u)) calc(8 * var(--u));
+  border-radius: 99px;
+  background: var(--teal-lt);
+  font-size: calc(10.5 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--teal-dk);
+}
+
+.pl-plan-behind .pl-fact-v {
+  color: var(--amber-dk);
+}
+
+.pl-plan-behind .pl-plan-note {
+  background: var(--amber-lt);
+  box-shadow: inset 0 0 0 1px var(--amber-bd);
+  color: var(--amber-dk);
 }
 
 /* Something to say instead — the first piece still awaited, a box just
@@ -1392,7 +1427,8 @@
   white-space: nowrap;
 }
 
-/* Red for an alarm, amber for a wait or a short box, green for a full one. */
+/* Red for an alarm; amber for a wait, a short box or an overdue one; green for
+   a full one. */
 .pl-event-dot {
   width: calc(8 * var(--u));
   height: calc(8 * var(--u));

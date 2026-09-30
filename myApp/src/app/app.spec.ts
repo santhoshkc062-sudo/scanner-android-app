@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppComponent } from './app';
-import { BoardSnapshot, PartCompletion, QueuedPart, QueuedProduct, SmesShift } from './smes-data';
+import { BoardSnapshot, PartCompletion, ProductPacking, QueuedPart, QueuedProduct, SmesShift } from './smes-data';
 
 const MIN = 60_000;
 const T0 = new Date(2026, 8, 26, 10, 0, 0).getTime();
@@ -17,12 +17,30 @@ function part(no: string, done: number, qty = 56, comp = ''): QueuedPart {
   return { PART_NAME: no, COMP_NAME: comp, PACKING_QTY: qty, DONE_QTY: done, IS_DONE: done >= qty };
 }
 
-function product(name: string, parts: QueuedPart[]): QueuedProduct {
-  return { PRODUCT_NAME: name, CUSTOMER_NAME: 'Indoshell', WORKER_NO: 'W1', WORKER_NAME: 'Ravi', PARTS: parts };
+/** A queue entry for product `name`, which is also its id in the master. */
+function product(name: string, parts: QueuedPart[], entryId?: string): QueuedProduct {
+  return {
+    _id: entryId,
+    PRODUCT_ID: name,
+    PRODUCT_NAME: name,
+    CUSTOMER_NAME: 'Indoshell',
+    WORKER_NO: 'W1',
+    WORKER_NAME: 'Ravi',
+    PARTS: parts,
+  };
+}
+
+/** Product `id` in the master, with these cycle times in seconds by part number. */
+function master(id: string, cycles: Record<string, number | null>): ProductPacking {
+  return { _id: id, PARTS: Object.entries(cycles).map(([no, sec]) => ({ PART_NAME: no, CYCLE_TIME_SEC: sec })) };
 }
 
 /** The line with these queues, by machine code; every other cell is empty. */
-function snapshot(queues: Record<string, QueuedProduct[]> = {}, shifts: SmesShift[] = []): BoardSnapshot {
+function snapshot(
+  queues: Record<string, QueuedProduct[]> = {},
+  shifts: SmesShift[] = [],
+  products: ProductPacking[] = [],
+): BoardSnapshot {
   return {
     lines: [{ LINE_CODE: 'L1', LINE_NAME: 'Line 1', IS_ACTIVE: true, MACHINES }],
     boards: [
@@ -38,6 +56,7 @@ function snapshot(queues: Record<string, QueuedProduct[]> = {}, shifts: SmesShif
       },
     ],
     shifts,
+    products,
   };
 }
 
@@ -47,6 +66,19 @@ function pair(m01Packed: number, m01Part = 'KL-1'): BoardSnapshot {
     'M-01': [product('Pump', [part(m01Part, m01Packed)])],
     'M-02': [product('Pump', [part('KL-2', 0)])],
   });
+}
+
+/** M-01 packing a part that takes `cycleSec` a piece, `packed` in its box of
+ *  56; M-02 counting a part the master has no cycle time for. */
+function timed(packed: number, cycleSec = 30): BoardSnapshot {
+  return snapshot(
+    {
+      'M-01': [product('Pump', [part('KL-1', packed)])],
+      'M-02': [product('Valve', [part('V-1', 3)])],
+    },
+    [],
+    [master('Pump', { 'KL-1': cycleSec })],
+  );
 }
 
 function box(machine: string, closedAt: number, id: string, done = 56, qty = 56): PartCompletion {
@@ -216,6 +248,33 @@ describe('machine card', () => {
     expect(cardOf('M-02').querySelector('.pl-ticker')).toBeNull();
     expect(cardOf('M-02').querySelector('.pl-next-none')?.textContent).toBe('Last part in the queue');
   });
+
+  it("reads each part's cycle time off the product master, matching parts as the main UI does", () => {
+    land(
+      snapshot(
+        {
+          'M-01': [product('Pump', [part('P-1', 3)])],
+          // Queued before parts had numbers: its number field holds the component name.
+          'M-02': [product('Pump', [part('Housing', 3)])],
+          'M-03': [product('Valve', [part('V-1', 3)])],
+        },
+        [],
+        [
+          {
+            _id: 'Pump',
+            PARTS: [
+              { PART_NAME: 'P-1', CYCLE_TIME_SEC: 30 },
+              { PART_NAME: 'P-2', COMP_NAME: 'Housing', CYCLE_TIME_SEC: 45 },
+            ],
+          },
+        ],
+      ),
+      T0,
+    );
+    const [m1, m2, m3] = app.anchors()[0].stations;
+
+    expect([m1.cycleSec, m2.cycleSec, m3.cycleSec]).toEqual([30, 45, 0]);
+  });
 });
 
 describe('component name', () => {
@@ -356,6 +415,132 @@ describe('pace', () => {
     expect(app.lastPiece().get('M-01')).toBe('just now');
     at(T0 + 7 * MIN);
     expect(app.lastPiece().get('M-01')).toBe('3 min ago');
+  });
+});
+
+describe('box plan', () => {
+  /** M-01's first piece landing at T0, after the board saw its box empty. */
+  function firstPieceAtT0(cycleSec = 30): void {
+    observe(timed(0, cycleSec), T0 - MIN);
+    observe(timed(1, cycleSec), T0);
+  }
+
+  it('plans the box from its first piece: one cycle time for every piece after it', () => {
+    firstPieceAtT0();
+
+    // 55 pieces to go after the first, at 30 s each.
+    expect(app.plans().get('M-01')).toEqual({ due: T0 + 55 * 30_000, behind: false, overdue: false, note: 'On plan' });
+    expect(app.plans().has('M-02')).toBe(false);
+  });
+
+  it('stays on plan while the count keeps up, and says how far behind once it is over a minute behind', () => {
+    firstPieceAtT0();
+    observe(timed(11), T0 + 5 * MIN);
+    expect(app.plans().get('M-01')?.note).toBe('On plan');
+
+    // The 12th piece was due at 5:30 — a minute ago, which is still allowed.
+    at(T0 + 6 * MIN + 30_000);
+    expect(app.plans().get('M-01')?.note).toBe('On plan');
+
+    at(T0 + 6 * MIN + 31_000);
+    expect(app.plans().get('M-01')).toEqual(expect.objectContaining({ behind: true, overdue: false, note: '3 pcs behind' }));
+  });
+
+  it("allows a slow part one whole cycle's lateness before it says so", () => {
+    firstPieceAtT0(120);
+
+    // The second piece was due at 2:00.
+    at(T0 + 3 * MIN + 30_000);
+    expect(app.plans().get('M-01')?.behind).toBe(false);
+
+    at(T0 + 4 * MIN + 1000);
+    expect(app.plans().get('M-01')?.note).toBe('2 pcs behind');
+  });
+
+  it('says overdue once the due time is a minute gone, and lists the box among the events', () => {
+    firstPieceAtT0();
+    observe(timed(40), T0 + 20 * MIN);
+
+    // Due at 27:30, and still 16 short.
+    at(T0 + 29 * MIN);
+    const m01 = () => app.events().filter((e) => e.code === 'M-01');
+    expect(app.plans().get('M-01')).toEqual(expect.objectContaining({ behind: true, overdue: true, note: 'Overdue 1 min' }));
+    expect(m01().map((e) => [e.at, e.text, e.tone])).toEqual([[T0 + 55 * 30_000, 'Box overdue · 40/56', 'wait']]);
+
+    // Stopped altogether: the stall is what the list says.
+    at(T0 + 102 * MIN + 30_000);
+    expect(app.plans().get('M-01')?.note).toBe('Overdue 1h 15m');
+    expect(m01().map((e) => e.text)).toEqual(['No inspection 10+ min']);
+  });
+
+  it('plans a box that was already under way from when the board first saw it', () => {
+    observe(timed(20), T0);
+
+    expect(app.plans().get('M-01')?.due).toBe(T0 + 36 * 30_000);
+  });
+
+  it('starts afresh on the next box of the same part', () => {
+    const twice = (a: number, b: number) =>
+      snapshot(
+        { 'M-01': [product('Pump', [part('KL-1', a)], 'q1'), product('Pump', [part('KL-1', b)], 'q2')] },
+        [],
+        [master('Pump', { 'KL-1': 30 })],
+      );
+    observe(twice(55, 0), T0);
+    // The box fills, and the next one's first pieces land before the board looks again.
+    observe(twice(56, 2), T0 + 2 * MIN);
+
+    expect(app.plans().get('M-01')?.due).toBe(T0 + 2 * MIN + 54 * 30_000);
+  });
+
+  it('plans nothing without a cycle time, before the first piece, or while the server is out of reach', () => {
+    land(
+      snapshot(
+        {
+          'M-01': [product('Pump', [part('KL-1', 0)])],
+          'M-02': [product('Valve', [part('V-1', 3)])],
+          'M-03': [product('Gear', [part('G-1', 5)])],
+        },
+        [],
+        [master('Pump', { 'KL-1': 30 }), master('Gear', { 'G-1': null })],
+      ),
+      T0,
+    );
+    at(T0 + MIN);
+    expect(app.plans().size).toBe(0);
+
+    firstPieceAtT0();
+    expect(app.plans().size).toBe(1);
+    app.feed.fetchError.set(true);
+    expect(app.plans().size).toBe(0);
+  });
+
+  it('keeps counting from the same first piece after a reboot', () => {
+    firstPieceAtT0();
+    TestBed.tick();
+
+    TestBed.resetTestingModule();
+    boot();
+    observe(timed(5), T0 + 3 * MIN);
+    expect(app.plans().get('M-01')?.due).toBe(T0 + 55 * 30_000);
+  });
+
+  it('puts the due time on the card, and turns the frame amber once the box falls behind', async () => {
+    land(timed(1), T0);
+    await fixture.whenStable();
+    at(T0);
+    fixture.detectChanges();
+
+    const plan = cardOf('M-01').querySelector('.pl-plan')!;
+    expect(plan.querySelector('.pl-fact-v')?.textContent).toBe('10:27 AM');
+    expect(plan.querySelector('.pl-plan-note')?.textContent).toBe('On plan');
+    expect(cardOf('M-01').classList).not.toContain('pl-behind');
+    expect(cardOf('M-02').querySelector('.pl-plan')).toBeNull();
+
+    at(T0 + 5 * MIN);
+    fixture.detectChanges();
+    expect(cardOf('M-01').classList).toContain('pl-behind');
+    expect(cardOf('M-01').querySelector('.pl-plan-note')?.textContent).toBe('10 pcs behind');
   });
 });
 
@@ -515,6 +700,19 @@ describe('dark theme', () => {
 
     const run = darkCardOf('M-01').querySelectorAll('.pl-ticker-run > *');
     expect(Array.from(run, (e) => e.textContent?.trim())).toEqual(['Cover', 'P-2', 'Qty 30', 'Part 2/2']);
+  });
+
+  it('puts the box plan on the dark card too, amber once the box falls behind', async () => {
+    bootDark();
+    land(timed(1), T0);
+    await fixture.whenStable();
+    at(T0 + 5 * MIN);
+    fixture.detectChanges();
+
+    expect(darkCardOf('M-01').classList).toContain('dk-behind');
+    expect(darkCardOf('M-01').querySelector('.dk-plan .dk-fact-v')?.textContent).toBe('10:27 AM');
+    expect(darkCardOf('M-01').querySelector('.dk-plan-note')?.textContent).toBe('10 pcs behind');
+    expect(darkCardOf('M-02').querySelector('.dk-plan')).toBeNull();
   });
 });
 

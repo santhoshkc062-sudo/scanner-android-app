@@ -4,7 +4,7 @@ import { Subject, Subscription, asyncScheduler, catchError, forkJoin, interval, 
 // Type only — the client itself is imported lazily in start().
 import type io from 'socket.io-client';
 
-import { AnchorMapping, BoardSnapshot, PartCompletion, SmesLine, SmesShift } from '../smes-data';
+import { AnchorMapping, BoardSnapshot, PartCompletion, ProductPacking, SmesLine, SmesShift } from '../smes-data';
 
 /** Where the server address lives — the same key the scanner screen uses. */
 export const SERVER_KEY = 'serverIp';
@@ -26,8 +26,8 @@ const POLL_MS = 30_000;
 const PUSH_THROTTLE_MS = 150;
 
 /** What a refetch has to cover. The server's push says `board` when only a
- *  cell queue changed, which needs just /anchor-mapping — the lines and
- *  shifts are unchanged, and skipping them is most of the round-trip. */
+ *  cell queue changed, which needs just /anchor-mapping — the lines, shifts
+ *  and products are unchanged, and skipping them is most of the round-trip. */
 type Scope = 'board' | 'all';
 
 export type FeedStatus = 'connecting' | 'live' | 'offline';
@@ -222,11 +222,18 @@ export class BoardFeed {
       boards: get<AnchorMapping[]>('anchor-mapping'),
       // The shift only labels the header; a failure there must not blank the board.
       shifts: get<SmesShift[]>('shift').pipe(catchError(() => of([] as SmesShift[]))),
+      // Only the boxes' plans read the products, for their cycle times. A
+      // failure keeps the ones already read, so no plan blinks off for a poll.
+      products: get<{ rows?: ProductPacking[] }>('product-packing').pipe(
+        map((r) => r?.rows || []),
+        catchError(() => of(prev?.products || [])),
+      ),
     }).pipe(
       map((r): BoardSnapshot => ({
         lines: (r.lines || []).filter((l) => l.IS_ACTIVE !== false),
         boards: r.boards || [],
         shifts: r.shifts || [],
+        products: r.products,
       })),
       catchError(() => of(null)),
     );

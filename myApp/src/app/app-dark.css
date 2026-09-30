@@ -473,6 +473,15 @@
     0 0 calc(16 * var(--u)) rgba(34, 195, 142, 0.12);
 }
 
+/* Counting, but behind its box's plan: an amber frame, as on the light board.
+   Above the stall rule, which takes over when the machine stops. */
+.dk-card.dk-behind {
+  border-color: rgba(242, 179, 61, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(242, 179, 61, 0.45),
+    0 0 calc(16 * var(--u)) rgba(242, 179, 61, 0.14);
+}
+
 .dk-card.dk-stalled {
   border-color: var(--dk-red);
   background: linear-gradient(100deg, #2c1322, #1c1627 55%, #151a2b);
@@ -658,8 +667,35 @@
   display: grid;
   align-content: center;
   justify-items: start;
+  grid-row-gap: calc(14 * var(--u));
   min-width: 0;
   padding: 0 calc(6 * var(--u)) 0 calc(4 * var(--u));
+}
+
+/* The box's plan, under the last piece: when it should be full, over a note
+   on how the count stands — green while it keeps up, amber once not. */
+.dk-plan-note {
+  justify-self: start;
+  padding: calc(3 * var(--u)) calc(8 * var(--u));
+  border: 1px solid #1d7a57;
+  border-radius: 99px;
+  background: #0f3024;
+  font-size: calc(10.5 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--dk-green-hi);
+}
+
+.dk-plan-behind .dk-fact-v {
+  color: var(--dk-amber);
+}
+
+.dk-plan-behind .dk-plan-note {
+  border-color: #9c7420;
+  background: #2a2213;
+  color: var(--dk-amber);
 }
 
 /* Something to say instead: an icon beside a small label over its value.

@@ -9,6 +9,10 @@
    boxes and events down the right.
 
    The same limits as app.css: no inset, no flex gap, no color-mix.
+
+   Classes from app.css work here, keyframes do not: Angular renames each
+   stylesheet's keyframes, and only the animations written in that same file
+   follow. So every animation named here is defined here too.
    ══════════════════════════════════════════════════════════════════════════ */
 
 .pl.dk {
@@ -286,7 +290,13 @@
   margin-right: calc(7 * var(--u));
   border-radius: 50%;
   background: currentColor;
-  animation: pl-blink 2s ease-in-out infinite;
+  animation: dk-blink 2s ease-in-out infinite;
+}
+
+@keyframes dk-blink {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .dk-set {
@@ -775,17 +785,6 @@
   color: var(--dk-white);
 }
 
-.dk-closed {
-  border-color: #1d8a60;
-  background: #0f2f24;
-  color: var(--dk-green-hi);
-}
-
-.dk-closed .dk-flag-v {
-  font-size: calc(20 * var(--u));
-  color: #e9fff5;
-}
-
 /* The box as a dial. The count pops on a rise with the light board's own
    animation (pl-bump, pl-plus), flashing this theme's green. */
 .dk-dial {
@@ -1121,9 +1120,38 @@
   background: var(--dk-amber);
 }
 
-/* The box that just closed, while it is news. */
+/* The box that just closed, while it is news. It lands lit as the rows below
+   slide down to make room (PushList), and its count pops as it settles — as
+   on the light board. */
 .dk-box-new {
   background: rgba(34, 195, 142, 0.1);
+  animation: dk-box-in 2s ease-out;
+}
+
+@keyframes dk-box-in {
+  0%,
+  35% {
+    background: rgba(34, 195, 142, 0.3);
+  }
+}
+
+.dk-box-new .dk-box-n {
+  transform-origin: 100% 50%;
+  animation: dk-box-pop 650ms cubic-bezier(0.2, 0.8, 0.2, 1) 400ms backwards;
+}
+
+@keyframes dk-box-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .dk-box-info {
@@ -1292,7 +1320,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dk-stall,
-  .dk-chip-dot {
+  .dk-chip-dot,
+  .dk-box-new,
+  .dk-box-new .dk-box-n {
     animation: none;
   }
 

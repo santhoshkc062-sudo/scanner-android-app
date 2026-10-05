@@ -597,8 +597,7 @@ describe('boxes this shift', () => {
   it("counts each machine's boxes, and the line's", () => {
     app.feed.completions.set([box('M-01', T0, 'b3'), box('M-01', T0 - 30 * MIN, 'b2', 50), box('M-07', T0 - 60 * MIN, 'b1')]);
 
-    expect(app.boxes().get('M-01')).toEqual(expect.objectContaining({ count: 2, pieces: 106 }));
-    expect(app.boxes().get('M-01')?.last?._id).toBe('b3');
+    expect(app.boxes().get('M-01')).toEqual({ count: 2, pieces: 106 });
     expect(app.boxTotals()).toEqual({ count: 3, pieces: 162, short: 1 });
   });
 
@@ -624,6 +623,83 @@ describe('boxes this shift', () => {
       ['b2', true],
       ['b1', false],
     ]);
+  });
+
+  describe('as a box arrives', () => {
+    const animate = vi.fn();
+
+    beforeEach(() => {
+      animate.mockClear();
+      // jsdom animates nothing and lays nothing out: animate() is recorded, and
+      // each box sits 70 px below the one before it, all in the one column.
+      Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true, writable: true });
+      vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains('pl-box') ? Array.from(this.parentElement!.children).indexOf(this) * 70 : 0;
+      });
+    });
+
+    afterEach(() => {
+      delete (HTMLElement.prototype as { animate?: unknown }).animate;
+      vi.restoreAllMocks();
+    });
+
+    /** The list loads with one old box, then M-01 closes one. */
+    async function arrive(): Promise<void> {
+      land(pair(4), T0);
+      await fixture.whenStable();
+      at(T0);
+      await fixture.whenStable();
+      app.feed.completions.set([box('M-07', T0 - 60 * MIN, 'b1')]);
+      await fixture.whenStable();
+      // The list as it first loads is not news, and moves nothing.
+      expect(animate).not.toHaveBeenCalled();
+
+      app.feed.completions.set([box('M-01', T0, 'b2'), box('M-07', T0 - 60 * MIN, 'b1')]);
+      await fixture.whenStable();
+    }
+
+    it('slides the list down, bringing the new box in from above, lit', async () => {
+      await arrive();
+
+      const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('.pl-box');
+      const push = [{ transform: 'translateY(-70px)' }, { transform: 'none' }];
+      expect(animate.mock.calls.map(([frames]) => frames)).toEqual([push, push]);
+      expect(animate.mock.contexts).toEqual([rows[0], rows[1]]);
+      expect(rows[0].classList).toContain('pl-box-new');
+      expect(rows[1].classList).not.toContain('pl-box-new');
+    });
+
+    it('moves nothing for a viewer who has asked for less motion', async () => {
+      const original = window.matchMedia;
+      window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+      try {
+        await arrive();
+        expect(animate).not.toHaveBeenCalled();
+      } finally {
+        window.matchMedia = original;
+      }
+    });
+  });
+
+  it('moves the card straight on to the next part when a box closes, and calls the box out only in the list', async () => {
+    land(pair(55), T0);
+    await fixture.whenStable();
+    at(T0);
+    await fixture.whenStable();
+    // The list as it first loads: nothing closed yet this shift.
+    app.feed.completions.set([]);
+    fixture.detectChanges();
+
+    // M-01's box fills, and its next part is on the machine awaiting the first piece.
+    land(pair(0, 'KL-9'), T0 + MIN);
+    at(T0 + MIN);
+    app.feed.completions.set([box('M-01', T0 + MIN, 'b1')]);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.pl-box-new .pl-box-mc')?.textContent).toBe('M-01');
+    expect(cardOf('M-01').querySelector('.pl-waiting')).not.toBeNull();
+    expect(cardOf('M-01').textContent).not.toContain('Box closed');
   });
 
   it('counts from the start of the shift, which for an overnight one was yesterday', () => {

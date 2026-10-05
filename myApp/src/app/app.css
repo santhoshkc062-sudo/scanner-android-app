@@ -767,9 +767,9 @@
   color: var(--amber-dk);
 }
 
-/* Something to say instead — the first piece still awaited, a box just
-   closed, the counting stopped: a compact box at its own size, centred in
-   the space, not a panel filling it. */
+/* Something to say instead — the first piece still awaited, the counting
+   stopped: a compact box at its own size, centred in the space, not a panel
+   filling it. */
 .pl-flag {
   align-self: center;
   justify-self: center;
@@ -800,7 +800,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Routine, not an alarm: the quietest of the three. */
+/* Routine, not an alarm: the quieter of the two. */
 .pl-waiting {
   border-color: var(--amber-bd);
   background: var(--amber-lt);
@@ -809,16 +809,6 @@
 
 .pl-waiting .pl-flag-v {
   font-size: calc(16 * var(--u));
-}
-
-.pl-closed {
-  border-color: var(--teal);
-  background: var(--teal-lt);
-  color: var(--teal-dk);
-}
-
-.pl-closed .pl-flag-v {
-  color: var(--teal);
 }
 
 /* Pulses between two tints of red, to be seen across the floor. */
@@ -1294,10 +1284,21 @@
   box-shadow: inset calc(3 * var(--u)) 0 0 var(--amber);
 }
 
-/* Just closed, while the board watched: called out for CLOSED_FLASH_MS. */
+/* Just closed, while the board watched: called out for CLOSED_FLASH_MS. It
+   lands lit — a flash of green that fades to this — as the rows below slide
+   down to make room (PushList), and its count pops as it settles. */
 .pl-box-new {
   border-color: var(--teal-bd);
   background: var(--teal-lt);
+  animation: pl-box-in 2s ease-out;
+}
+
+@keyframes pl-box-in {
+  0%,
+  35% {
+    border-color: var(--teal);
+    background: #bfeedd;
+  }
 }
 
 .pl-box-info {
@@ -1374,6 +1375,27 @@
   margin-left: calc(1 * var(--u));
   font-size: 0.55em;
   color: var(--muted);
+}
+
+/* A new box's count: held back until the row has all but landed, then in
+   with a bounce. */
+.pl-box-new .pl-box-n {
+  transform-origin: 100% 50%;
+  animation: pl-box-pop 650ms cubic-bezier(0.2, 0.8, 0.2, 1) 400ms backwards;
+}
+
+@keyframes pl-box-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .pl-box-s {
@@ -1470,7 +1492,9 @@
   .pl-stall,
   .pl-chip-dot,
   .pl-bump,
-  .pl-bump-alt {
+  .pl-bump-alt,
+  .pl-box-new,
+  .pl-box-new .pl-box-n {
     animation: none;
   }
 

@@ -150,7 +150,7 @@
                     </div>
                   </div>
 
-                  <!-- How it is going: an alarm, a box just closed, the first piece awaited, or the last piece -->
+                  <!-- How it is going: an alarm, the first piece awaited, or the last piece and the box's plan -->
                   <div class="dk-activity">
                     @if (stall) {
                       <div class="dk-flag dk-stall">
@@ -158,14 +158,6 @@
                         <span class="dk-flag-text">
                           <span class="dk-flag-k">No inspection for</span>
                           <span class="dk-flag-v">{{ stall }}</span>
-                        </span>
-                      </div>
-                    } @else if (justClosed().has(s.code) && box?.last) {
-                      <div class="dk-flag dk-closed">
-                        <svg appIcon="cube"></svg>
-                        <span class="dk-flag-text">
-                          <span class="dk-flag-k">Box closed</span>
-                          <span class="dk-flag-v">{{ box!.last!.DONE_QTY }} pcs</span>
                         </span>
                       </div>
                     } @else if (s.status === 'waiting') {
@@ -260,7 +252,8 @@
             <span class="dk-panel-note">{{ boxTotals().pieces | number }} pcs</span>
           </div>
           @if (recentBoxes().length) {
-            <div class="dk-boxlist">
+            <!-- A box that closes slides in at the top and pushes the rest down -->
+            <div class="dk-boxlist" appPushList>
               @for (row of recentBoxes(); track row.box._id ?? row.box.COMPLETED_AT) {
                 <div class="dk-box" [class.dk-box-short]="!row.box.IS_FULL" [class.dk-box-new]="row.fresh">
                   <div class="dk-box-info">
@@ -454,20 +447,17 @@
                     </div>
                   </div>
 
-                  <!-- How it is going: when the last piece came, or a box in its
-                       place when there is something to say -->
+                  <!-- How it is going: when the last piece came and the box's plan,
+                       or a box in their place when there is something to say. A box
+                       that has just closed is not one of them: the card moves
+                       straight on to the next part, and the list on the right
+                       carries the closed box. -->
                   <div class="pl-stack pl-activity">
                     @if (stall) {
                       <!-- Running, but no new count for STALL_MS: the time since the last one -->
                       <div class="pl-flag pl-stall">
                         <span class="pl-flag-k">No inspection for</span>
                         <span class="pl-flag-v pl-stall-v">{{ stall }}</span>
-                      </div>
-                    } @else if (justClosed().has(s.code) && box?.last) {
-                      <!-- The box that just closed, for a minute and a half -->
-                      <div class="pl-flag pl-closed">
-                        <span class="pl-flag-k">&#10003; Box closed</span>
-                        <span class="pl-flag-v">{{ box!.last!.DONE_QTY }} pcs</span>
                       </div>
                     } @else if (s.status === 'waiting') {
                       <div class="pl-flag pl-waiting">
@@ -566,7 +556,8 @@
             <span class="pl-panel-title">Completed boxes</span>
             <span class="pl-panel-note"><b>{{ boxTotals().count }}</b> &middot; {{ boxTotals().pieces | number }} pcs</span>
           </div>
-          <div class="pl-boxlist">
+          <!-- A box that closes slides in at the top and pushes the rest down -->
+          <div class="pl-boxlist" appPushList>
             @for (row of recentBoxes(); track row.box._id ?? row.box.COMPLETED_AT) {
               <div class="pl-box" [class.pl-box-short]="!row.box.IS_FULL" [class.pl-box-new]="row.fresh">
                 <div class="pl-box-info">

@@ -15,6 +15,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FitLine } from './fit-line';
 import { Icon } from './icon';
 import { PackingLine, Station, StationStatus, SystemChip } from './packing-line';
+import { PushList } from './push-list';
 import { NO_SHIFT, PartCompletion, toPackingLine } from './smes-data';
 import { BoardFeed, LINE_KEY, SERVER_KEY, normaliseServer } from './services/board-feed';
 
@@ -36,7 +37,8 @@ const STALL_MS = 10 * 60_000;
 const NEAR_FULL = 5;
 const nearFullAt = (target: number) => Math.max(2, Math.min(NEAR_FULL, Math.ceil(target / 10)));
 
-/** How long a closed box is called out, on its card and in the list. */
+/** How long a closed box is called out in the list on the right. Never on its
+ *  card, which moves straight on to the next part. */
 const CLOSED_FLASH_MS = 90_000;
 
 /** How long after the board sees a count go up the card marks it; the
@@ -211,7 +213,7 @@ const EMPTY_LINE: PackingLine = {
  */
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, DecimalPipe, FitLine, Icon],
+  imports: [DatePipe, DecimalPipe, FitLine, Icon, PushList],
   templateUrl: './app.html',
   styleUrls: ['./app.css', './app-dark.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -520,14 +522,13 @@ export class AppComponent {
     return out;
   });
 
-  /** Boxes each machine has closed this shift, with the latest. */
+  /** Boxes each machine has closed this shift, and the pieces in them. */
   readonly boxes = computed(() => {
-    const out = new Map<string, { count: number; pieces: number; last?: PartCompletion }>();
+    const out = new Map<string, { count: number; pieces: number }>();
     for (const r of this.feed.completions() || []) {
       const key = boxOwner(r);
       const b = out.get(key) || { count: 0, pieces: 0 };
-      // Newest first, so the first row seen for a machine is its latest box.
-      out.set(key, { count: b.count + 1, pieces: b.pieces + (r.DONE_QTY || 0), last: b.last || r });
+      out.set(key, { count: b.count + 1, pieces: b.pieces + (r.DONE_QTY || 0) });
     }
     return out;
   });
